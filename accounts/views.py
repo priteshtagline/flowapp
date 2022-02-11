@@ -1,8 +1,14 @@
 from rest_framework import generics
 from rest_framework.response import Response
 
-from .serializer import RegisterSerializer, UserSerializer
-
+from .serializer import (
+    RegisterSerializer,
+    UserSerializer,
+    CustomTokenObtainPairSerializer,
+)
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+)
 
 # Register API
 class RegisterApi(generics.GenericAPIView):
@@ -20,3 +26,8 @@ class RegisterApi(generics.GenericAPIView):
                 "message": "User Created Successfully.  Now perform Login to get your token",
             }
         )
+
+
+class CustomTokenObtainPairView(TokenObtainPairView):
+    # Replace the serializer with your custom
+    serializer_class = CustomTokenObtainPairSerializer

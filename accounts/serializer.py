@@ -1,6 +1,5 @@
 from rest_framework import serializers
 from .models import User
-
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 
@@ -27,4 +26,17 @@ class RegisterSerializer(serializers.ModelSerializer):
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = "__all__"
+        fields = ('first_name','last_name','email')
+
+
+class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        # The default result (access/refresh tokens)
+        data = super(CustomTokenObtainPairSerializer, self).validate(attrs)
+        # Custom data you want to include
+        data.update({"id": self.user.id})
+        data.update({"email": self.user.email})
+        data.update({"firstname": self.user.first_name})
+        data.update({"lastname": self.user.last_name})
+        # and everything else you want to send in the response
+        return data
