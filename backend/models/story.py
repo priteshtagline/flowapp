@@ -1,7 +1,7 @@
-from operator import mod
 from ckeditor.fields import RichTextField
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from datetime import date, timedelta
 
 
 class Story(models.Model):
@@ -16,6 +16,14 @@ class Story(models.Model):
 
     def __str__(self):
         return self.name
+
+    def save(self, *args, **kwargs):
+        # MANIPULATING DATETIME
+        today_date = date.today()
+        # as said earlier it takes argument as day by default
+        expiry_time = timedelta(1)
+        self.expiration_time = today_date + expiry_time
+        super(Story, self).save(*args, **kwargs)
 
 
 class Tags(models.Model):

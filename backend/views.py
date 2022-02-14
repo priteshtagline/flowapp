@@ -1,6 +1,5 @@
 from django.shortcuts import redirect
 from .models import Story
-from django.urls import path, reverse_lazy
 
 
 def set_publish_status(request, pk):

@@ -10,12 +10,9 @@ class TagsAdmin(admin.TabularInline):
 
 
 class StoryAdmin(admin.ModelAdmin):
-    exclude = (
-        "expiration_time",
-        "is_publish",
-    )
+    exclude = ("expiration_time",)
 
-    list_display = ["name", "status"]
+    list_display = ["name", "status","expiration_time"]
     inlines = [
         TagsAdmin,
     ]
@@ -26,6 +23,12 @@ class StoryAdmin(admin.ModelAdmin):
                 '<button><a style="color:black" href="{}">{}</a></button>',
                 f"/api/publish/{obj.pk}/",
                 "Publish",
+            )
+        else:
+            return format_html(
+                '<button><a style="color:black" href="{}">{}</a></button>',
+                f"/api/publish/{obj.pk}/",
+                "Push Notification",
             )
 
 
