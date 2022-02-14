@@ -1,7 +1,7 @@
 version: "3.9"
 
 services:
-  postgres:
+  db:
     image: postgres
     restart: always
     environment:
@@ -23,9 +23,9 @@ services:
       - "8000:8000"
     env_file: .env
     depends_on:
-      - postgres
+      - db
     links:
-      - postgres
+      - db
 
 volumes:
   db-data:
