@@ -37,14 +37,11 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    'ckeditor',
     "backend",
     "accounts",
     "rest_framework",
     "django.contrib.sites",
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
-    "allauth.socialaccount.providers.google",
     "django_rest_passwordreset",
 ]
 
