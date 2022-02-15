@@ -6,6 +6,7 @@ django-filter==21.1
 djangorestframework_simplejwt==5.0.0
 django-rest-passwordreset
 django-allauth==0.48.0
-gunicorn
-django-heroku
-whitenoise
+django-ckeditor==6.2.0
+celery==4.2.1
+redis==2.10.6
+
