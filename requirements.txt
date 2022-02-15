@@ -9,3 +9,4 @@ django-allauth==0.48.0
 django-ckeditor==6.2.0
 celery==4.2.1
 redis==2.10.6
+
