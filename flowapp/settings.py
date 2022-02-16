@@ -56,6 +56,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+
 ]
 
 ROOT_URLCONF = "flowapp.urls"
@@ -85,9 +86,9 @@ WSGI_APPLICATION = "flowapp.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.environ.get("POSTGRES_NAME"),
-        "USER": os.environ.get("POSTGRES_USER"),
-        "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+        "NAME": "postgres",
+        "USER": "postgres",
+        "PASSWORD": "postgres",
         "HOST": "db",
         "PORT": 5432,
     }
@@ -159,7 +160,10 @@ EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
 CELERY_BEAT_SCHEDULE = {
-    "hello": {"task": "app.tasks.hello", "schedule": crontab()}  # execute every minute
+    "hello": {
+        "task": "backend.tasks.hello",
+        "schedule": crontab(),
+    }  # execute every minute
 }
 
 # Celery set up.
@@ -168,5 +172,9 @@ CELERY_RESULT_BACKEND = "redis://redis:6379"
 CELERY_ACCEPT_CONTENT = ["application/json"]
 CELERY_TASK_SERIALIZER = "json"
 CELERY_RESULT_SERIALIZER = "json"
+CELERY_REDIRECT_STDOUTS_LEVEL = "INFO"
+
 
 CORS_ORIGIN_ALLOW_ALL = True
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
