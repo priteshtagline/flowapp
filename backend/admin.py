@@ -1,7 +1,8 @@
 from django.contrib import admin
 from django.utils.html import format_html
 
-from backend.models.story import Tags, Story
+from backend.models.story import Tags, Story, PushNotification
+from solo.admin import SingletonModelAdmin
 
 
 class TagsAdmin(admin.TabularInline):
@@ -32,3 +33,4 @@ class StoryAdmin(admin.ModelAdmin):
 
 
 admin.site.register(Story, StoryAdmin)
+admin.site.register(PushNotification, SingletonModelAdmin)
