@@ -8,8 +8,10 @@ from .serializer import (
     savedStorySerializer,
     storyCreateSerializers,
 )
-from .models.story import Story
+from .models.story import Story, Tags
 from django.db.models import Q
+from rest_framework.views import APIView
+from django.http import Http404, request
 from rest_framework.response import Response
 import datetime
 
@@ -41,7 +43,16 @@ class isReadClass(generics.ListAPIView):
         IsAuthenticated,
     ]
     serializer_class = isReadSerializers
-    queryset = Story.objects.filter(status="publish", is_read=False)
+    queryset = Story.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        is_read_flag = request.GET.get("is_read")
+        instance = self.get_object()
+
+        instance.is_read = True if is_read_flag else False
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
 
 class savedStoryClass(generics.GenericAPIView):
