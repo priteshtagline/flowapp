@@ -10,9 +10,8 @@ class TagsAdmin(admin.TabularInline):
 
 
 class StoryAdmin(admin.ModelAdmin):
-    # exclude = ("expiration_time",)
 
-    list_display = ["name", "status", "expiration_time"]
+    list_display = ["title", "status", "expiration_time"]
     inlines = [
         TagsAdmin,
     ]

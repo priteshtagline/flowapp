@@ -23,6 +23,7 @@ def set_publish_status(request, pk):
 class StoryView(generics.ListAPIView):
     """Returns all story whose are published."""
 
+
     permission_classes = [
         IsAuthenticated,
     ]
@@ -32,6 +33,7 @@ class StoryView(generics.ListAPIView):
         | Q(status="unpublish")
         | Q(status="archived")
     ).order_by("-create_at")
+
 
 
 class isReadClass(generics.ListAPIView):

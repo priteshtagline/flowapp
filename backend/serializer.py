@@ -46,6 +46,11 @@ class storyListSerializers(serializers.ModelSerializer):
         data["content"] = BeautifulSoup(data["content"], "html.parser").get_text()
         return data
 
+    def to_representation(self, data):
+        data = super(storyListSerializers, self).to_representation(data)
+        data["content"] = BeautifulSoup(data["content"], "html.parser").get_text()
+        return data
+
 
 class storyCreateSerializers(serializers.ModelSerializer):
     class Meta:
