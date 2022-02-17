@@ -103,7 +103,7 @@ class ReadStorySerializer(serializers.ModelSerializer):
             "id",
             "title",
             "image",
-            "content",
+            "content",  
             "create_at",
             "readed",
             "read",
