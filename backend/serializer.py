@@ -31,6 +31,7 @@ class storyListSerializers(serializers.ModelSerializer):
             "create_at",
             "is_read",
             "is_saved",
+            "update_at",
         ]
 
     def get_tags(self, obj):

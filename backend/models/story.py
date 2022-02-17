@@ -26,7 +26,7 @@ class Story(models.Model):
         settings.AUTH_USER_MODEL, related_name="saved", blank=True
     )
     create_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         verbose_name = _("Story")
