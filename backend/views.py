@@ -8,10 +8,8 @@ from .serializer import (
     savedStorySerializer,
     storyCreateSerializers,
 )
-from .models.story import Story, Tags
+from .models.story import Story
 from django.db.models import Q
-from rest_framework.views import APIView
-from django.http import Http404, request
 from rest_framework.response import Response
 import datetime
 

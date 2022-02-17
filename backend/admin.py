@@ -1,6 +1,5 @@
 from django.contrib import admin
 from django.utils.html import format_html
-from django import forms
 
 from backend.models.story import Tags, Story
 

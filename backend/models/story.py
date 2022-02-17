@@ -1,11 +1,9 @@
-from distutils.command.upload import upload
 from ckeditor.fields import RichTextField
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from datetime import timedelta, date
+from datetime import timedelta
 import datetime
 from flowapp import settings
-from django.utils import timezone
 from django.core.validators import MaxLengthValidator
 
 
