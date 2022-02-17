@@ -30,8 +30,8 @@ class storyListSerializers(serializers.ModelSerializer):
             "tags",
             "create_at",
             "is_read",
-            "is_saved",
             "update_at",
+            "read",
         ]
 
     def get_tags(self, obj):
@@ -93,6 +93,35 @@ class savedStorySerializer(serializers.ModelSerializer):
         else:
             is_save = False
         return is_save
+
+    def to_representation(self, data):
+        data = super(savedStorySerializer, self).to_representation(data)
+        data["content"] = BeautifulSoup(data["content"], "html.parser").get_text()
+        return data
+
+
+class ReadStorySerializer(serializers.ModelSerializer):
+    readed = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Story
+        fields = [
+            "id",
+            "title",
+            "image",
+            "content",
+            "create_at",
+            "is_read",
+            "readed",
+            "read",
+        ]
+
+    def get_readed(self, obj):
+        if obj.read.count() > 0:
+            readed = True
+        else:
+            readed = False
+        return readed
 
     def to_representation(self, data):
         data = super(savedStorySerializer, self).to_representation(data)

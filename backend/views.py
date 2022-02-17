@@ -7,6 +7,7 @@ from .serializer import (
     isReadSerializers,
     savedStorySerializer,
     storyCreateSerializers,
+    ReadStorySerializer,
 )
 from .models.story import Story, Tags
 from django.db.models import Q
@@ -26,17 +27,13 @@ def set_publish_status(request, pk):
 class StoryView(generics.ListAPIView):
     """Returns all story whose are published."""
 
-
     permission_classes = [
         IsAuthenticated,
     ]
     serializer_class = storyListSerializers
     queryset = Story.objects.exclude(
-        Q(status="draft")
-        | Q(status="unpublish")
-        | Q(status="archived")
+        Q(status="draft") | Q(status="unpublish") | Q(status="archived")
     ).order_by("-create_at")
-
 
 
 class isReadClass(generics.ListAPIView):
@@ -48,9 +45,16 @@ class isReadClass(generics.ListAPIView):
 
     def post(self, request, *args, **kwargs):
         is_read_flag = request.GET.get("is_read")
-        instance = self.get_object()
+        try:
+            instance = self.get_object()
+        except:
+            return Response(
+                {"error": {"story_id": ["Please provide valid story id."]}}, status=400
+            )
 
-        instance.is_read = True if is_read_flag else False
+        instance.read.add(
+            request.user.id
+        ) if is_read_flag == "true" else instance.read.remove(request.user.id)
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data)
@@ -87,3 +91,26 @@ class storyCreateClass(generics.ListCreateAPIView):
 class storyRUD(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = storyCreateSerializers
     queryset = Story.objects.all()
+
+
+class readStoryClass(generics.GenericAPIView):
+    permission_classes = [
+        IsAuthenticated,
+    ]
+    serializer_class = savedStorySerializer
+    queryset = Story.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        is_saved_flag = request.GET.get("is_saved")
+        try:
+            instance = self.get_object()
+        except:
+            return Response(
+                {"error": {"story_id": ["Please provide valid story id."]}}, status=400
+            )
+        instance.saved.add(
+            request.user.id
+        ) if is_saved_flag == "true" else instance.saved.remove(request.user.id)
+
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
