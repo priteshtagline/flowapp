@@ -1,8 +1,7 @@
 from ckeditor.fields import RichTextField
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from datetime import timedelta
-import datetime
+from datetime import timedelta, datetime
 from flowapp import settings
 from django.core.validators import MaxLengthValidator
 
@@ -24,9 +23,7 @@ class Story(models.Model):
     )
     is_read = models.BooleanField(_("Is Read"), default=False)
     expiration_time = models.DateTimeField(
-        _("Expiration Time"),
-        db_index=True,
-        default=datetime.datetime.now() + timedelta(days=1),
+        _("Expiration Time"), db_index=True, editable=False
     )
     saved = models.ManyToManyField(
         settings.AUTH_USER_MODEL, related_name="saved", blank=True
@@ -44,6 +41,12 @@ class Story(models.Model):
 
     def __str__(self):
         return self.title
+
+    def save(self):
+        d = timedelta(days=1)
+        if not self.id:
+            self.expiration_time = datetime.now() + d
+            super(Story, self).save()
 
 
 class Tags(models.Model):

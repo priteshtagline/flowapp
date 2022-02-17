@@ -3,7 +3,6 @@ from .views import *
 
 urlpatterns = [
     path("publish/<int:pk>/", set_publish_status, name="set-publish-status"),
-    # path("api/saved/<int:pk>/", savedStory.as_view(), name=""),
     path("story/", StoryView.as_view(), name="storyview"),
     path("isread/<int:pk>/", isReadClass.as_view(), name="isread"),
     # Save Unsave Story API.

@@ -4,7 +4,6 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from .serializer import (
     storyListSerializers,
-    isReadSerializers,
     savedStorySerializer,
     storyCreateSerializers,
     ReadStorySerializer,
@@ -40,7 +39,7 @@ class isReadClass(generics.ListAPIView):
     permission_classes = [
         IsAuthenticated,
     ]
-    serializer_class = isReadSerializers
+    serializer_class = ReadStorySerializer
     queryset = Story.objects.all()
 
     def post(self, request, *args, **kwargs):
@@ -91,26 +90,3 @@ class storyCreateClass(generics.ListCreateAPIView):
 class storyRUD(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = storyCreateSerializers
     queryset = Story.objects.all()
-
-
-class readStoryClass(generics.GenericAPIView):
-    permission_classes = [
-        IsAuthenticated,
-    ]
-    serializer_class = savedStorySerializer
-    queryset = Story.objects.all()
-
-    def post(self, request, *args, **kwargs):
-        is_saved_flag = request.GET.get("is_saved")
-        try:
-            instance = self.get_object()
-        except:
-            return Response(
-                {"error": {"story_id": ["Please provide valid story id."]}}, status=400
-            )
-        instance.saved.add(
-            request.user.id
-        ) if is_saved_flag == "true" else instance.saved.remove(request.user.id)
-
-        serializer = self.get_serializer(instance)
-        return Response(serializer.data)
