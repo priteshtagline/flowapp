@@ -21,8 +21,9 @@ def set_publish_status(request, pk):
 
 
 class StoryView(generics.ListAPIView):
-    """Returns all story whose are published.
-    """   
+    """Returns all story whose are published."""
+
+
     permission_classes = [
         IsAuthenticated,
     ]
@@ -31,10 +32,8 @@ class StoryView(generics.ListAPIView):
         Q(status="draft")
         | Q(status="unpublish")
         | Q(status="archived")
-        | Q(create_at__gte=datetime.datetime.now())
-    )
-    
-  
+    ).order_by("-create_at")
+
 
 
 class isReadClass(generics.ListAPIView):
@@ -54,13 +53,15 @@ class savedStoryClass(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         is_saved_flag = request.GET.get("is_saved")
-        instance = self.get_object()
-        is_saved = instance.saved.filter(pk=request.user.id).exists()
-        if is_saved:
-            instance.saved.remove(request.user)
-        else:
-            if is_saved_flag == "True":
-                instance.saved.add(request.user)
+        try:
+            instance = self.get_object()
+        except:
+            return Response(
+                {"error": {"story_id": ["Please provide valid story id."]}}, status=400
+            )
+        instance.saved.add(
+            request.user.id
+        ) if is_saved_flag == "true" else instance.saved.remove(request.user.id)
 
         serializer = self.get_serializer(instance)
         return Response(serializer.data)

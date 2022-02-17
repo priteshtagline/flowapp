@@ -19,7 +19,6 @@ class issavedornot(serializers.ModelSerializer):
 
 class storyListSerializers(serializers.ModelSerializer):
     tags = serializers.SerializerMethodField()
-    is_saved = serializers.SerializerMethodField()
 
     class Meta:
         model = Story
@@ -37,12 +36,15 @@ class storyListSerializers(serializers.ModelSerializer):
     def get_tags(self, obj):
         return [s.name for s in obj.tags_set.all()]
 
-    def get_is_saved(self, obj):
-        if obj.saved.count() >= 1:
-            is_save = True
-        else:
-            is_save = False
-        return is_save
+    def to_representation(self, data):
+        data = super(storyListSerializers, self).to_representation(data)
+        data["content"] = BeautifulSoup(data["content"], "html.parser").get_text()
+        return data
+
+    def to_representation(self, data):
+        data = super(storyListSerializers, self).to_representation(data)
+        data["content"] = BeautifulSoup(data["content"], "html.parser").get_text()
+        return data
 
     def to_representation(self, data):
         data = super(storyListSerializers, self).to_representation(data)
@@ -55,7 +57,7 @@ class storyCreateSerializers(serializers.ModelSerializer):
         model = Story
         fields = [
             "id",
-            "name",
+            "title",
             "image",
             "content",
             "create_at",
@@ -70,6 +72,28 @@ class isReadSerializers(serializers.ModelSerializer):
 
 
 class savedStorySerializer(serializers.ModelSerializer):
+    is_saved = serializers.SerializerMethodField()
+
     class Meta:
         model = Story
-        fields = ["id", "saved", "name"]
+        fields = [
+            "id",
+            "title",
+            "image",
+            "content",
+            "create_at",
+            "is_read",
+            "is_saved",
+        ]
+
+    def get_is_saved(self, obj):
+        if obj.saved.count() > 0:
+            is_save = True
+        else:
+            is_save = False
+        return is_save
+
+    def to_representation(self, data):
+        data = super(savedStorySerializer, self).to_representation(data)
+        data["content"] = BeautifulSoup(data["content"], "html.parser").get_text()
+        return data
