@@ -8,18 +8,18 @@ from django.core.validators import MaxLengthValidator
 
 
 class Story(models.Model):
-    name = models.CharField(_("Name"), max_length=1000)
+    title = models.CharField(_("Title"), max_length=1000)
     content = RichTextField(validators=[MaxLengthValidator(240)])
-    image = models.ImageField(upload_to="story_image", blank=True, null=True)
+    image = models.ImageField(upload_to="story_image", blank=True, null=True,verbose_name="Images")
     status_choise = [
         ("publish", "publish"),
         ("unpublish", "unpublish"),
         ("draft", "draft"),
         ("archived", "archived"),
     ]
-    status = models.CharField(choices=status_choise, default="draft", max_length=150)
-    is_read = models.BooleanField(default=False)
-    expiration_time = models.DateTimeField(
+    status = models.CharField(_("Status"),choices=status_choise, default="draft", max_length=150)
+    is_read = models.BooleanField(_("Is Read"),default=False)
+    expiration_time = models.DateTimeField(_("Expiration Time"),
         db_index=True, default=datetime.datetime.now() + timedelta(days=1)
     )
     saved = models.ManyToManyField(
@@ -34,7 +34,7 @@ class Story(models.Model):
         ordering = ["-create_at"]
 
     def __str__(self):
-        return self.name
+        return self.title
 
 
 class Tags(models.Model):
