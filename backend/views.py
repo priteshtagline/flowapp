@@ -20,7 +20,9 @@ def set_publish_status(request, pk):
     return redirect("/admin/backend/story")
 
 
-class StorysClass(generics.ListAPIView):
+class StoryView(generics.ListAPIView):
+    """Returns all story whose are published.
+    """   
     permission_classes = [
         IsAuthenticated,
     ]
@@ -31,6 +33,8 @@ class StorysClass(generics.ListAPIView):
         | Q(status="archived")
         | Q(create_at__gte=datetime.datetime.now())
     )
+    
+  
 
 
 class isReadClass(generics.ListAPIView):
