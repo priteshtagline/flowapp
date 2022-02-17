@@ -47,6 +47,9 @@ INSTALLED_APPS = [
     "ckeditor",
     "backend",
     "accounts",
+    "fcm_django",
+    "push_notifications",
+    "solo",
 ]
 
 MIDDLEWARE = [
@@ -199,4 +202,10 @@ SIMPLE_JWT = {
     "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
     "SLIDING_TOKEN_LIFETIME": timedelta(days=10),
     "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=20),
+}
+
+
+FCM_DJANGO_SETTINGS = {
+    "FCM_SERVER_KEY": os.getenv("FCM_SERVER_KEY"),
+    "UPDATE_ON_DUPLICATE_REG_ID": True,
 }
