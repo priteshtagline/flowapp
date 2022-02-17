@@ -66,12 +66,6 @@ class storyCreateSerializers(serializers.ModelSerializer):
         ]
 
 
-class isReadSerializers(serializers.ModelSerializer):
-    class Meta:
-        model = Story
-        fields = ["id", "is_read"]
-
-
 class savedStorySerializer(serializers.ModelSerializer):
     is_saved = serializers.SerializerMethodField()
 
@@ -111,7 +105,6 @@ class ReadStorySerializer(serializers.ModelSerializer):
             "image",
             "content",
             "create_at",
-            "is_read",
             "readed",
             "read",
         ]
@@ -124,6 +117,6 @@ class ReadStorySerializer(serializers.ModelSerializer):
         return readed
 
     def to_representation(self, data):
-        data = super(savedStorySerializer, self).to_representation(data)
+        data = super(ReadStorySerializer, self).to_representation(data)
         data["content"] = BeautifulSoup(data["content"], "html.parser").get_text()
         return data
