@@ -1,29 +1,42 @@
+from distutils.command.upload import upload
 from ckeditor.fields import RichTextField
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from datetime import date, timedelta
+from datetime import timedelta, date
+import datetime
+from flowapp import settings
+from django.utils import timezone
+from django.core.validators import MaxLengthValidator
 
 
 class Story(models.Model):
     name = models.CharField(_("Name"), max_length=1000)
-    content = RichTextField()
-    is_publish = models.BooleanField(default=False)
-    expiration_time = models.DateTimeField(db_index=True, null=True, blank=True)
+    content = RichTextField(validators=[MaxLengthValidator(240)])
+    image = models.ImageField(upload_to="story_image", blank=True, null=True)
+    status_choise = [
+        ("publish", "publish"),
+        ("unpublish", "unpublish"),
+        ("draft", "draft"),
+        ("archived", "archived"),
+    ]
+    status = models.CharField(choices=status_choise, default="draft", max_length=150)
+    is_read = models.BooleanField(default=False)
+    expiration_time = models.DateTimeField(
+        db_index=True, default=datetime.datetime.now() + timedelta(days=1)
+    )
+    saved = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, related_name="saved", blank=True
+    )
+    create_at = models.DateTimeField(auto_now_add=True)
+    update_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = _("Story")
         verbose_name_plural = _("Story")
+        ordering = ["-create_at"]
 
     def __str__(self):
         return self.name
-
-    def save(self, *args, **kwargs):
-        # MANIPULATING DATETIME
-        today_date = date.today()
-        # as said earlier it takes argument as day by default
-        expiry_time = timedelta(1)
-        self.expiration_time = today_date + expiry_time
-        super(Story, self).save(*args, **kwargs)
 
 
 class Tags(models.Model):
