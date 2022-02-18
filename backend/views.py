@@ -52,23 +52,25 @@ class StorySavedReadAPIView(generics.GenericAPIView):
         IsAuthenticated,
     ]
     serializer_class = storySerializers
-    queryset = Story.objects.all()
+    model = Story
+
+    def get_object(self):
+        try:
+            return self.model.objects.get(pk=self.request.GET.get("story_id"))
+        except:
+            return None
 
     def post(self, request, *args, **kwargs):
-        try:
-            instance = self.get_object()
-        except:
+        if not self.get_object():
             return Response(
                 {"error": {"story_id": ["Please provide valid story id."]}}, status=400
             )
-
         url = request.build_absolute_uri()
         flagName = None
         if "is_saved" in url:
             flagName = "is_saved"
         if "is_read" in url:
             flagName = "is_read"
-
-        read_or_save_story(flagName, instance, request)
-        serializer = self.get_serializer(instance)
+        read_or_save_story(flagName, self.get_object(), request)
+        serializer = self.get_serializer(self.get_object())
         return Response(serializer.data)

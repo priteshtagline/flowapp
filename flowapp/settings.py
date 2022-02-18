@@ -209,4 +209,4 @@ FCM_DJANGO_SETTINGS = {
     "FCM_SERVER_KEY": os.getenv("FCM_SERVER_KEY"),
     "UPDATE_ON_DUPLICATE_REG_ID": True,
 }
-
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
