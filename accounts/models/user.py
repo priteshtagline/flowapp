@@ -17,7 +17,7 @@ class User(AbstractUser):
         blank=True,
         null=True,
         help_text="(e.g +918457221548, +33123456789)",
-        max_length=12,
+        max_length=25,
     )
 
     USERNAME_FIELD = "email"
