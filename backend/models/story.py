@@ -22,7 +22,6 @@ class Story(models.Model):
     status = models.CharField(
         _("Status"), choices=status_choise, default="draft", max_length=150
     )
-    is_read = models.BooleanField(_("Is Read"), default=False)
     expiration_time = models.DateTimeField(
         _("Expiration Time"), db_index=True, editable=False
     )
