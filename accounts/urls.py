@@ -1,6 +1,11 @@
 from django.urls import path
 from rest_framework_simplejwt import views as jwt_views
-from .views import RegisterApi, CustomTokenObtainPairView
+from .views import (
+    RegisterApi,
+    CustomTokenObtainPairView,
+    ChangePasswordView,
+    UserProfileView,
+)
 from django.urls import path, include
 
 
@@ -14,4 +19,10 @@ urlpatterns = [
         "api/password_reset/",
         include("django_rest_passwordreset.urls", namespace="password_reset"),
     ),
+    path(
+        "api/changepassword/<int:pk>/",
+        ChangePasswordView.as_view(),
+        name="changepassword",
+    ),
+    path("api/profile/<int:pk>", UserProfileView.as_view(), name="UserProfile"),
 ]

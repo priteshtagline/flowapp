@@ -1,14 +1,18 @@
 from rest_framework import generics
 from rest_framework.response import Response
+from .models.user import User
 
 from .serializer import (
     RegisterSerializer,
     UserSerializer,
     CustomTokenObtainPairSerializer,
+    ChangePasswordSerializer,
+    UserProfileSerializer,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
 )
+from rest_framework.permissions import IsAuthenticated
 
 # Register API
 class RegisterApi(generics.GenericAPIView):
@@ -31,3 +35,15 @@ class RegisterApi(generics.GenericAPIView):
 class CustomTokenObtainPairView(TokenObtainPairView):
     # Replace the serializer with your custom
     serializer_class = CustomTokenObtainPairSerializer
+
+
+class ChangePasswordView(generics.UpdateAPIView):
+    queryset = User.objects.all()
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ChangePasswordSerializer
+
+
+class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
+    queryset = User.objects.all()
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserProfileSerializer
