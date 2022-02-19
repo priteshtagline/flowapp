@@ -13,7 +13,7 @@ class TagsAdmin(admin.StackedInline):
 
 class StoryAdmin(admin.ModelAdmin):
 
-    list_display = ["title", "status", "expiration_time"]
+    list_display = ["title", "status", "expiration_time", "status_button"]
     inlines = [
         TagsAdmin,
     ]

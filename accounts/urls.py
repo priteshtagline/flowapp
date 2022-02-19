@@ -11,8 +11,8 @@ from django.urls import path, include
 
 
 urlpatterns = [
-    path("api/register", RegisterApi.as_view()),
-    path("api/login", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/register/", RegisterApi.as_view()),
+    path("api/login/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path(
         "api/token/refresh/", jwt_views.TokenRefreshView.as_view(), name="token_refresh"
     ),

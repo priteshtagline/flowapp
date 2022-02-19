@@ -5,7 +5,6 @@ from .models import User
 from django.db.models import Q
 from django.contrib.auth.hashers import make_password
 from fcm_django.models import FCMDevice
-from django.core.validators import EmailValidator
 
 
 # Register serializer
@@ -35,6 +34,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
+            "id",
             "email",
             "first_name",
             "last_name",
@@ -80,7 +80,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         users = User.objects.filter(Q(email__iexact=kwargs["data"]["email"]))
         user = users.first()
-        users.update(device_type=kwargs["data"]["device_type"])
+        # users.update(device_type=kwargs["data"]["device_type"])
         if user and user.check_password(kwargs["data"]["email"]):
             if FCM_update["registration_id"] != "":
                 FCM_update["user"] = user

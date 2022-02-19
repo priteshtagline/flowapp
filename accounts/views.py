@@ -157,6 +157,3 @@ class FCMTokenAPI(generics.CreateAPIView):
             return Response({"error": {"device_id": ["device id is invalid"]}})
 
         return Response(serializer.data)
-
-
-
