@@ -10,11 +10,14 @@ from backend.models.story import Story
 from .models.story import Story
 from .serializer import storySerializers
 from accounts.models import User
+from datetime import timedelta, datetime
 
 
 def set_publish_status(request, pk):
     """Update story status."""
-    Story.objects.filter(pk=pk).update(status="publish")
+    Story.objects.filter(pk=pk).update(
+        status="publish", expiration_time=datetime.now() + timedelta(days=1)
+    )
     return redirect("/admin/backend/story")
 
 
@@ -97,3 +100,4 @@ def notification_send(request, pk):
 
     for i in device_token_list:
         i.send_message(notification_data)
+

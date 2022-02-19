@@ -14,6 +14,7 @@ class TagsAdmin(admin.StackedInline):
 class StoryAdmin(admin.ModelAdmin):
 
     list_display = ["title", "status", "expiration_time", "status_button"]
+
     inlines = [
         TagsAdmin,
     ]
@@ -22,13 +23,13 @@ class StoryAdmin(admin.ModelAdmin):
         if not obj.status == "publish":
             return format_html(
                 '<button><a style="color:black" href="{}">{}</a></button>',
-                f"/api/publish/{obj.pk}/",
+                f"/api/story/publish/{obj.pk}/",
                 "Publish",
             )
         else:
             return format_html(
                 '<button><a style="color:black" href="{}">{}</a></button>',
-                f"/api/publish/{obj.pk}/",
+                f"/api/story/notifications/{obj.pk}/",
                 "Push Notification",
             )
 
