@@ -9,7 +9,6 @@ class TagsAdmin(admin.StackedInline):
     model = Tags
     extra = 3
     max_num = 3
-    Required = True
 
 
 class StoryAdmin(admin.ModelAdmin):
@@ -19,7 +18,7 @@ class StoryAdmin(admin.ModelAdmin):
         TagsAdmin,
     ]
 
-    def status(self, obj):
+    def status_button(self, obj):
         if not obj.status == "publish":
             return format_html(
                 '<button><a style="color:black" href="{}">{}</a></button>',
