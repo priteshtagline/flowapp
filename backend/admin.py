@@ -18,7 +18,7 @@ class TagsAdmin(admin.StackedInline):
 
 class StoryAdmin(admin.ModelAdmin):
     exclude = ["saved", "read", "update_at"]
-    list_display = ["title", "status", "expiration_time", "status_button"]
+    list_display = ["title", "status", "status_button"]
     inlines = [
         TagsAdmin,
     ]
