@@ -9,12 +9,12 @@ class TagsAdmin(admin.StackedInline):
     model = Tags
     extra = 3
     max_num = 3
-    Required = True
 
 
 class StoryAdmin(admin.ModelAdmin):
 
-    list_display = ["title", "status", "status_button"]
+    list_display = ["title", "status", "expiration_time", "status_button"]
+
     inlines = [
         TagsAdmin,
     ]

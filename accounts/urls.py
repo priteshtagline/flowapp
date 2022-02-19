@@ -5,13 +5,14 @@ from .views import (
     CustomTokenObtainPairView,
     ChangePasswordView,
     UserProfileView,
+    FCMTokenAPI,
 )
 from django.urls import path, include
 
 
 urlpatterns = [
-    path("api/register", RegisterApi.as_view()),
-    path("api/login", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
+    path("api/register/", RegisterApi.as_view()),
+    path("api/login/", CustomTokenObtainPairView.as_view(), name="token_obtain_pair"),
     path(
         "api/token/refresh/", jwt_views.TokenRefreshView.as_view(), name="token_refresh"
     ),
@@ -21,4 +22,5 @@ urlpatterns = [
     ),
     path("api/change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("api/profile/", UserProfileView.as_view(), name="UserProfile"),
+    path("device-register/", FCMTokenAPI.as_view(), name="device_fcm_register"),
 ]
