@@ -50,7 +50,7 @@ class Story(models.Model):
 
 
 class Tags(models.Model):
-    name = models.CharField(_("Tag name"), max_length=1000, null=True, blank=True)
+    name = models.CharField(_("Tag name"), max_length=1000, null=False)
     Story = models.ForeignKey(Story, on_delete=models.CASCADE)
 
     class Meta:

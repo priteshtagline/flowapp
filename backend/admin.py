@@ -5,9 +5,11 @@ from backend.models.story import Tags, Story, PushNotification
 from solo.admin import SingletonModelAdmin
 
 
-class TagsAdmin(admin.TabularInline):
+class TagsAdmin(admin.StackedInline):
     model = Tags
     extra = 3
+    max_num = 3
+    Required = True
 
 
 class StoryAdmin(admin.ModelAdmin):
