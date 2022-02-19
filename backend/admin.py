@@ -9,7 +9,6 @@ class TagsAdmin(admin.StackedInline):
     model = Tags
     extra = 3
     max_num = 3
-    min_num = 3
     Required = True
 
 
