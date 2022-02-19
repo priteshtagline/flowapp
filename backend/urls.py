@@ -12,6 +12,7 @@ urlpatterns = [
         name="save-view",
     ),
     path("read/", StorySavedReadAPIView.as_view(), name="read-view"),
+    path("notifications/<int:pk>/", notification_send, name="read-view"),
 ]
 
 urlpatterns += [

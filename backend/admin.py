@@ -1,8 +1,13 @@
 from django.contrib import admin
+from django.contrib.auth.models import Group
 from django.utils.html import format_html
-
-from backend.models.story import Tags, Story, PushNotification
 from solo.admin import SingletonModelAdmin
+
+from backend.models.story import PushNotification
+from backend.models.story import Story
+from backend.models.story import Tags
+
+admin.site.unregister(Group)
 
 
 class TagsAdmin(admin.StackedInline):
@@ -12,9 +17,8 @@ class TagsAdmin(admin.StackedInline):
 
 
 class StoryAdmin(admin.ModelAdmin):
-
-    list_display = ["title", "status", "expiration_time", "status_button"]
-
+    exclude = ["saved", "read", "update_at"]
+    list_display = ["title", "status", "status_button"]
     inlines = [
         TagsAdmin,
     ]

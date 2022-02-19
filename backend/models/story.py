@@ -22,7 +22,7 @@ class Story(models.Model):
         _("Status"), choices=status_choise, default="draft", max_length=150
     )
     expiration_time = models.DateTimeField(
-        _("Expiration Time"), db_index=True, editable=False
+        _("Expiration Time"), db_index=True, editable=False, null=True, blank=True
     )
     saved = models.ManyToManyField(
         settings.AUTH_USER_MODEL, related_name="saved", blank=True

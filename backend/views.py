@@ -9,8 +9,10 @@ from backend.models.story import Story
 
 from .models.story import Story
 from .serializer import storySerializers
-from accounts.models import User
 from datetime import timedelta, datetime
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 def set_publish_status(request, pk):
@@ -87,17 +89,21 @@ def notification_send(request, pk):
 
     notification_data = dict()
     notification_data["title"] = story_instance.title
-    notification_data["body"] = story_instance.content if story_instance.message else ""
+    notification_data["body"] = story_instance.content if story_instance.content else ""
     notification_data["image"] = (
         story_instance.image.url if story_instance.image else ""
     )
-
     device_token_list = (
         all_devices.exclude(registration_id__isnull=True)
         .exclude(registration_id="null")
         .values_list("registration_id", flat=True)
     )
+    for token in device_token_list:
+        try:
+            device = FCMDevice.objects.get(registration_id=token)
+            device.send_message(notification_data)
+        except Exception as e:
+            logger.info(f"Not send push notifications {token}")
+            logger.error(str(e))
 
-    for i in device_token_list:
-        i.send_message(notification_data)
-
+    return redirect("/admin/backend/story/")
