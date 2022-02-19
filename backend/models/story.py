@@ -1,9 +1,8 @@
 from ckeditor.fields import RichTextField
+from django.core.validators import MaxLengthValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
-from datetime import timedelta, datetime
 from flowapp import settings
-from django.core.validators import MaxLengthValidator
 from solo.models import SingletonModel
 
 
@@ -41,12 +40,6 @@ class Story(models.Model):
 
     def __str__(self):
         return self.title
-
-    def save(self):
-        d = timedelta(days=1)
-        if not self.id:
-            self.expiration_time = datetime.now() + d
-            super(Story, self).save()
 
 
 class Tags(models.Model):

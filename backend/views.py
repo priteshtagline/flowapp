@@ -8,11 +8,14 @@ from backend.models.story import Story
 
 from .models.story import Story
 from .serializer import storySerializers
+from datetime import timedelta, datetime
 
 
 def set_publish_status(request, pk):
     """Update story status."""
-    Story.objects.filter(pk=pk).update(status="publish")
+    Story.objects.filter(pk=pk).update(
+        status="publish", expiration_time=datetime.now() + timedelta(days=1)
+    )
     return redirect("/admin/backend/story")
 
 
@@ -74,3 +77,7 @@ class StorySavedReadAPIView(generics.GenericAPIView):
         read_or_save_story(flagName, self.get_object(), request)
         serializer = self.get_serializer(self.get_object())
         return Response(serializer.data)
+
+
+def notifaction_send(request):
+    pass
