@@ -1,4 +1,3 @@
-from django.urls import include
 from django.urls import path
 
 from .views import *
@@ -16,5 +15,5 @@ urlpatterns = [
 ]
 
 urlpatterns += [
-    path("", include("accounts.urls")),
+    path("saved_list/", SavedAPIView.as_view(), name="saved_list"),
 ]

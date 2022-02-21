@@ -1,7 +1,9 @@
+from dataclasses import fields
 from bs4 import BeautifulSoup
 from rest_framework import serializers
 
 from .models.story import Story
+from accounts.models.user import User
 from .models.story import Tags
 
 

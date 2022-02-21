@@ -1,7 +1,7 @@
 from django.db.models import Q
 from django.shortcuts import redirect
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from fcm_django.models import FCMDevice
 
@@ -13,6 +13,10 @@ from datetime import timedelta, datetime
 import logging
 
 logger = logging.getLogger(__name__)
+from django.shortcuts import render, get_object_or_404
+from rest_framework import pagination
+from accounts.models.user import User
+from rest_framework.views import APIView
 
 
 def set_publish_status(request, pk):
@@ -42,6 +46,13 @@ def read_or_save_story(flag, instance, request):
         obj.remove(request.user.id)
 
 
+class CustomPagination(pagination.PageNumberPagination):
+    page_size = 10
+    page_size_query_param = "page_size"
+    max_page_size = 3
+    page_query_param = "p"
+
+
 class StoryView(generics.ListAPIView):
     """Returns all story whose are published."""
 
@@ -49,9 +60,30 @@ class StoryView(generics.ListAPIView):
         IsAuthenticated,
     ]
     serializer_class = storySerializers
-    queryset = Story.objects.exclude(
-        Q(status="draft") | Q(status="unpublish") | Q(status="archived")
-    ).order_by("-create_at")
+    pagination_class = CustomPagination
+
+    def get_object(self):
+        return get_object_or_404(Story, id=self.request.query_params.get("id"))
+
+    def get_queryset(self):
+        return Story.objects.exclude(
+            Q(status="draft") | Q(status="unpublish") | Q(status="archived")
+        ).order_by("-create_at")
+
+
+class SavedAPIView(APIView):
+    permission_classes = [
+        IsAuthenticated,
+    ]
+    serializer_class = storySerializers
+    pagination_class = CustomPagination
+    queryset = Story.objects.all()
+
+    def get(self, request, *args, **kwargs):
+        saved_user = Story.objects.filter(saved=self.request.user)
+        print(saved_user)
+        serializer = storySerializers(saved_user, many=True)
+        return Response(serializer.data)
 
 
 class StorySavedReadAPIView(generics.GenericAPIView):
