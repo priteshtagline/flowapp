@@ -6,13 +6,19 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('backend', '0002_alter_story_expiration_time'),
+        ("backend", "0002_alter_story_expiration_time"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='story',
-            name='expiration_time',
-            field=models.DateTimeField(blank=True, db_index=True, editable=False, null=True, verbose_name='Expiration Time'),
+            model_name="story",
+            name="expiration_time",
+            field=models.DateTimeField(
+                blank=True,
+                db_index=True,
+                editable=False,
+                null=True,
+                verbose_name="Expiration Time",
+            ),
         ),
     ]

@@ -115,11 +115,21 @@ class StorySavedReadAPIView(generics.GenericAPIView):
         return Response(serializer.data)
 
 
+def prepate_notification_data(instance, notification_data_image=""):
+    return {
+        "id": instance.id,
+        "title": instance.title,
+        "content": instance.content,
+        "image": instance.image.url if instance.image else "",
+    }
+
+
 def notification_send(request, pk):
     all_devices = FCMDevice.objects.order_by("device_id", "-id").distinct("device_id")
     story_instance = Story.objects.get(pk=pk)
 
     notification_data = dict()
+    notification_data["id"] = story_instance.id
     notification_data["title"] = story_instance.title
     notification_data["body"] = story_instance.content if story_instance.content else ""
     notification_data["image"] = (

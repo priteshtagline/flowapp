@@ -3,11 +3,12 @@ import os
 
 import requests
 from django.db.models import F
-from django.db.models.signals import post_save
+from django.db.models.signals import post_save, pre_save, post_delete
 from django.dispatch import receiver
 from fcm_django.models import FCMDevice
 
-from backend.models.story import PushNotification, Story
+from backend.models.story import PushNotification, Story, Tags
+from datetime import timedelta, datetime
 
 
 def prepate_notification_data(instance, notification_data_image=""):
@@ -73,3 +74,34 @@ def send_custom_notification(sender, instance, **kwargs):
 
     # push notification send all device.
     push_notification_send(device_token_list, notification_data, story_data)
+
+
+def update_null_to_empty_string_in_story(sender, instance, **kwargs):
+    if instance.title == "null" or instance.title == None:
+        instance.title = ""
+    if instance.image == "null" or instance.image == None:
+        instance.image = ""
+    if instance.content == "null" or instance.content == None:
+        instance.content = ""
+
+
+post_save.connect(update_null_to_empty_string_in_story, sender=Story)
+pre_save.connect(update_null_to_empty_string_in_story, sender=Story)
+
+
+def update_null_to_empty_string_in_tags(sender, instance, **kwargs):
+    if instance.tags == "null" or instance.tags == None:
+        instance.tags = ""
+
+
+post_save.connect(update_null_to_empty_string_in_tags, sender=Tags)
+pre_save.connect(update_null_to_empty_string_in_tags, sender=Tags)
+
+
+def update_project_last_modified(sender, instance, **kwargs):
+    if instance.update_at == "null" or instance.update_at == None:
+        instance.update_at = datetime.now()
+
+
+pre_save.connect(update_project_last_modified, sender=Story)
+post_delete.connect(update_project_last_modified, sender=Story)

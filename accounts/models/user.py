@@ -43,11 +43,6 @@ class User(AbstractUser):
     provider_type = models.CharField(
         max_length=255, choices=PROVIDER_TYPE, default="flow_app"
     )
-    provider_user_id = models.CharField(
-        max_length=255,
-        blank=True,
-        null=True,
-    )
     device_id = models.CharField(max_length=255, null=True, blank=True)
     device_type = models.CharField(
         max_length=10, choices=DEVICE_TYPE, null=True, blank=True

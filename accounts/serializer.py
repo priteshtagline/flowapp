@@ -1,3 +1,4 @@
+from dataclasses import fields
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -17,6 +18,8 @@ class RegisterSerializer(serializers.ModelSerializer):
             "email",
             "first_name",
             "last_name",
+            "dob",
+            "phone_number",
             "password",
             "device_id",
             "device_type",
@@ -26,6 +29,7 @@ class RegisterSerializer(serializers.ModelSerializer):
         }
 
     def create(self, validated_data):
+        print("from create")
         validated_data["password"] = make_password(validated_data["password"])
         return super(RegisterSerializer, self).create(validated_data)
 
@@ -40,7 +44,6 @@ class UserSerializer(serializers.ModelSerializer):
             "first_name",
             "last_name",
             "provider_type",
-            "provider_user_id",
             "device_id",
             "device_type",
             "password",
