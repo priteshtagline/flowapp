@@ -1,3 +1,4 @@
+from re import T
 from ckeditor.fields import RichTextField
 from django.core.validators import MaxLengthValidator
 from django.db import models
@@ -7,10 +8,16 @@ from solo.models import SingletonModel
 
 
 class Story(models.Model):
-    title = models.CharField(_("Title"), max_length=1000)
-    content = RichTextField(validators=[MaxLengthValidator(240)])
+    title = models.CharField(
+        _("Title"), max_length=128, validators=[MaxLengthValidator(128)]
+    )
+    content = RichTextField(validators=[MaxLengthValidator(384)])
     image = models.ImageField(
-        upload_to="story_image", blank=True, null=True, verbose_name="Images"
+        upload_to="story_image",
+        blank=True,
+        null=True,
+        verbose_name="Images",
+        default="",
     )
     status_choise = [
         ("publish", "publish"),
@@ -25,10 +32,14 @@ class Story(models.Model):
         _("Expiration Time"), db_index=True, editable=False, null=True, blank=True
     )
     saved = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, related_name="saved", blank=True
+        settings.AUTH_USER_MODEL,
+        related_name="saved",
+        blank=True,
     )
     read = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, related_name="read", blank=True
+        settings.AUTH_USER_MODEL,
+        related_name="read",
+        blank=True,
     )
     create_at = models.DateTimeField(auto_now_add=True)
     update_at = models.DateTimeField(blank=True, null=True)
@@ -43,7 +54,7 @@ class Story(models.Model):
 
 
 class Tags(models.Model):
-    name = models.CharField(_("Tag name"), max_length=1000, null=False)
+    name = models.CharField(_("Tag name"), max_length=1000, null=False, default="#")
     Story = models.ForeignKey(Story, on_delete=models.CASCADE)
 
     class Meta:

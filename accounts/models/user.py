@@ -18,10 +18,22 @@ class User(AbstractUser):
     )
 
     username = None
-    first_name = models.CharField(_("First Name"), max_length=255)
-    last_name = models.CharField(_("Last Name"), max_length=255)
-    email = models.EmailField(_("Email Address"), unique=True)
-    dob = models.DateField(blank=True, null=True)
+    first_name = models.CharField(
+        _("First Name"),
+        max_length=255,
+    )
+    last_name = models.CharField(
+        _("Last Name"),
+        max_length=255,
+    )
+    email = models.EmailField(
+        _("Email Address"),
+        unique=True,
+    )
+    dob = models.DateField(
+        blank=True,
+        null=True,
+    )
     phone_number = models.CharField(
         blank=True,
         null=True,
@@ -31,7 +43,11 @@ class User(AbstractUser):
     provider_type = models.CharField(
         max_length=255, choices=PROVIDER_TYPE, default="flow_app"
     )
-    provider_user_id = models.CharField(max_length=255, blank=True, null=True)
+    provider_user_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+    )
     device_id = models.CharField(max_length=255, null=True, blank=True)
     device_type = models.CharField(
         max_length=10, choices=DEVICE_TYPE, null=True, blank=True

@@ -5,6 +5,7 @@ from .models import User
 from django.db.models import Q
 from django.contrib.auth.hashers import make_password
 from fcm_django.models import FCMDevice
+from backend.models.story import Story
 
 
 # Register serializer
@@ -90,8 +91,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         super().__init__(*args, **kwargs)
 
     def validate(self, user_data):
-        user_response = super(CustomTokenObtainPairSerializer, self).validate(user_data)
-
+        user_response = super(CustomTokenObtainPairSerializer, self).validate(
+            user_data,
+        )
         # Access token with to include user detail.
         user_response.pop("refresh")
         user_response.update({"user": UserSerializer(self.user).data})

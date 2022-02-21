@@ -7,9 +7,7 @@ from django.db.models.signals import post_save
 from django.dispatch import receiver
 from fcm_django.models import FCMDevice
 
-from backend.models.story import (
-    PushNotification,
-)
+from backend.models.story import PushNotification, Story
 
 
 def prepate_notification_data(instance, notification_data_image=""):
