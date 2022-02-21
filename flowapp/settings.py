@@ -49,7 +49,15 @@ INSTALLED_APPS = [
     "fcm_django",
     "push_notifications",
     "solo",
+    "rest_auth",
+    "allauth",
+    "allauth.account",
+    "allauth.socialaccount",
+    "allauth.socialaccount.providers.google",
 ]
+
+REST_USE_JWT = True
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -156,6 +164,12 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 3,
 }
+
+
+SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = (
+    "968281437170-ko87c3667sjs78kssth825qthk61pngq.apps.googleusercontent.com"
+)
+SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = "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"
 
 
 EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")

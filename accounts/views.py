@@ -9,6 +9,7 @@ from .serializer import (
     ChangePasswordSerializer,
     UserProfileSerializer,
     FcmTokenSerializer,
+    GoogleSocialAuthSerializer,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -157,3 +158,17 @@ class FCMTokenAPI(generics.CreateAPIView):
             return Response({"error": {"device_id": ["device id is invalid"]}})
 
         return Response(serializer.data)
+
+
+from allauth.socialaccount.providers.oauth2.client import OAuth2Client
+from rest_auth.registration.serializers import SocialLoginSerializer
+from rest_auth.registration.views import SocialLoginView
+
+from .adapters import GoogleOAuth2AdapterIdToken
+
+
+class GoogleLoginView(SocialLoginView):
+    adapter_class = GoogleOAuth2AdapterIdToken
+    callback_url = "http://localhost:8000/api/v1/users/login/google/callback/"
+    client_class = OAuth2Client
+    serializer_class = SocialLoginSerializer

@@ -1,13 +1,16 @@
 from dataclasses import fields
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
+from django.core.validators import EmailValidator
 from .models import User
 from django.db.models import Q
 from django.contrib.auth.hashers import make_password
 from fcm_django.models import FCMDevice
 from backend.models.story import Story
-
+from . import google
+from rest_framework.exceptions import AuthenticationFailed
+import os
+from .register import register_social_user
 
 # Register serializer
 class RegisterSerializer(serializers.ModelSerializer):
@@ -120,6 +123,31 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ["first_name", "last_name", "email", "dob", "phone_number"]
 
 
+class SocialUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "full_name",
+            "email",
+            "provider_type",
+            "device_id",
+            "device_type",
+        )
+        extra_kwargs = {
+            "email": {
+                "required": True,
+                "allow_blank": False,
+                "validators": [EmailValidator],
+            },
+            "provider_type": {
+                "required": True,
+                "allow_blank": False,
+            },
+            "password": {"write_only": True},
+        }
+
+
 class FcmTokenSerializer(serializers.Serializer):
     DEVICE_TYPE = (
         ("android", "android"),
@@ -128,3 +156,28 @@ class FcmTokenSerializer(serializers.Serializer):
     registration_id = serializers.CharField(max_length=255)
     device_id = serializers.CharField(max_length=255)
     device_type = serializers.ChoiceField(choices=DEVICE_TYPE)
+
+
+class GoogleSocialAuthSerializer(serializers.Serializer):
+    auth_token = serializers.CharField()
+
+    def validate_auth_token(self, auth_token):
+        user_data = google.Google.validate(auth_token)
+        try:
+            user_data["sub"]
+        except:
+            raise serializers.ValidationError(
+                "The token is invalid or expired. Please login again."
+            )
+
+        if user_data["aud"] != os.environ.get("GOOGLE_CLIENT_ID"):
+            raise AuthenticationFailed("oops, who are you?")
+
+        user_id = user_data["sub"]
+        email = user_data["email"]
+        name = user_data["name"]
+        provider = "google"
+
+        return register_social_user(
+            provider=provider, user_id=user_id, email=email, name=name
+        )
