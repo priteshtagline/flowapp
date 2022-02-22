@@ -6,7 +6,8 @@ from .views import (
     ChangePasswordView,
     UserProfileView,
     FCMTokenAPI,
-    GoogleSocialAuthView,
+    SocialUserView,
+    VerifyEmail,
 )
 from django.urls import path, include
 
@@ -23,6 +24,11 @@ urlpatterns = [
     ),
     path("api/change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("api/profile/", UserProfileView.as_view(), name="UserProfile"),
-    path("api/email/", GoogleSocialAuthView.as_view(), name="signwithgoogle"),
     path("device-register/", FCMTokenAPI.as_view(), name="device_fcm_register"),
+    path(
+        "signin/social-media/",
+        SocialUserView.as_view(),
+        name="social_media_signin",
+    ),
+    path("email-verify/", VerifyEmail.as_view(), name="email-verify"),
 ]

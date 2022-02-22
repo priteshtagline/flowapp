@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
-
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -49,14 +49,8 @@ INSTALLED_APPS = [
     "fcm_django",
     "push_notifications",
     "solo",
-    "rest_auth",
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
-    "allauth.socialaccount.providers.google",
+    "drf_yasg",
 ]
-
-REST_USE_JWT = True
 
 
 MIDDLEWARE = [
@@ -106,10 +100,6 @@ DATABASES = {
     }
 }
 
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend",
-]
 
 SITE_ID = 1
 
@@ -153,7 +143,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Extra places for collectstatic to find static files.
-STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
 AUTH_USER_MODEL = "accounts.User"
 
@@ -165,26 +155,21 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 3,
 }
 
-
-SOCIAL_AUTH_GOOGLE_OAUTH2_KEY = (
-    "968281437170-ko87c3667sjs78kssth825qthk61pngq.apps.googleusercontent.com"
-)
-SOCIAL_AUTH_GOOGLE_OAUTH2_SECRET = "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"
-
-
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
 EMAIL_HOST = os.getenv("EMAIL_HOST")
 EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS")
 EMAIL_PORT = os.getenv("EMAIL_PORT")
 EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
+EMAIL_USE_SSL = os.getenv("EMAIL_USE_SSL")
 
-# CELERY_BEAT_SCHEDULE = {
-#     "hello": {
-#         "task": "backend.tasks.hello",
-#         "schedule": crontab(),
-#     }  # execute every minute
-# }
+
+CELERY_BEAT_SCHEDULE = {
+    "hello": {
+        "task": "backend.tasks.hello",
+        "schedule": crontab(),
+    }  # execute every minute
+}
 
 # Celery set up.
 CELERY_BROKER_URL = "redis://redis:6379"

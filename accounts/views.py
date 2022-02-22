@@ -1,7 +1,14 @@
 from rest_framework import generics
 from rest_framework.response import Response
 from .models.user import User
-
+from .utils import Util
+from django.contrib.sites.shortcuts import get_current_site
+from django.urls import reverse
+import jwt
+from drf_yasg.utils import swagger_auto_schema
+from drf_yasg import openapi
+from django.core.mail import EmailMessage, send_mail
+from flowapp import settings
 from .serializer import (
     RegisterSerializer,
     UserSerializer,
@@ -9,14 +16,14 @@ from .serializer import (
     ChangePasswordSerializer,
     UserProfileSerializer,
     FcmTokenSerializer,
-    GoogleSocialAuthSerializer,
+    SocialUserSerializer,
+    EmailVerificationSerializer,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
 )
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.permissions import IsAuthenticated
-
 from rest_framework import status
 from rest_framework import generics
 from rest_framework.response import Response
@@ -60,8 +67,9 @@ class RegisterApi(generics.GenericAPIView):
                 },
                 status=400,
             )
-
         user = serializer.save()
+        user_data = serializer.data
+        user_re_data = dict(user_data)
 
         FCM_update = {}
         FCM_update["registration_id"] = ""
@@ -71,9 +79,70 @@ class RegisterApi(generics.GenericAPIView):
             FCM_update["type"] = request.data["device_type"]
 
         if FCM_update["registration_id"] != "":
-            FCM_update["device_id"] = user.device_id
-            fcm_device_create(FCM_update, user, user.first_name)
-        return user_access_token(user, self.get_serializer_context(), is_created=True)
+            FCM_update["device_id"] = user_re_data["device_id"]
+            fcm_device_create(FCM_update, user, user_re_data["first_name"])
+        current_site = get_current_site(request).domain
+        relativeLink = reverse("email-verify")
+        absurl = (
+            "http://"
+            + current_site
+            + relativeLink
+            + "?token="
+            + str(user_re_data["token"]["access"])
+        )
+        email_body = (
+            "Hi "
+            + user_re_data["email"]
+            + " Use the link below to verify your email \n"
+            + absurl
+        )
+        data = {
+            "email_body": email_body,
+            "to_email": user_re_data["email"],
+            "email_subject": "Verify your email",
+        }
+        send_mail(
+            data["email_subject"],
+            data["email_body"],
+            settings.EMAIL_HOST_USER,
+            [data["to_email"]],
+            fail_silently=False,
+        )
+        Util.send_email(data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        # return user_access_token(user, self.get_serializer_context(), is_created=True)
+
+
+class VerifyEmail(generics.GenericAPIView):
+    serializer_class = EmailVerificationSerializer
+
+    token_param_config = openapi.Parameter(
+        "token",
+        in_=openapi.IN_QUERY,
+        description="Description",
+        type=openapi.TYPE_STRING,
+    )
+
+    @swagger_auto_schema(manual_parameters=[token_param_config])
+    def get(self, request):
+        token = request.GET.get("token")
+        try:
+            payload = jwt.decode(token, settings.SECRET_KEY)
+            user = User.objects.get(id=payload["user_id"])
+            if not user.is_verified:
+                user.is_verified = True
+                user.save()
+            return Response(
+                {"email": "Successfully activated"}, status=status.HTTP_200_OK
+            )
+        except jwt.ExpiredSignatureError as identifier:
+            return Response(
+                {"error": "Activation Expired"}, status=status.HTTP_400_BAD_REQUEST
+            )
+        except jwt.exceptions.DecodeError as identifier:
+            return Response(
+                {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
+            )
 
 
 class CustomTokenObtainPairView(TokenObtainPairView):
@@ -160,15 +229,105 @@ class FCMTokenAPI(generics.CreateAPIView):
         return Response(serializer.data)
 
 
-from allauth.socialaccount.providers.oauth2.client import OAuth2Client
-from rest_auth.registration.serializers import SocialLoginSerializer
-from rest_auth.registration.views import SocialLoginView
-
-from .adapters import GoogleOAuth2AdapterIdToken
+class SocialUserView(generics.GenericAPIView):
+    serializer_class = SocialUserSerializer
 
 
-class GoogleLoginView(SocialLoginView):
-    adapter_class = GoogleOAuth2AdapterIdToken
-    callback_url = "http://localhost:8000/api/v1/users/login/google/callback/"
-    client_class = OAuth2Client
-    serializer_class = SocialLoginSerializer
+class SocialUserView(generics.GenericAPIView):
+    serializer_class = SocialUserSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        if not serializer.is_valid():
+            return Response({"error": serializer.errors}, status=400)
+
+        # get_user = User.objects.filter(
+        #     Q(email__iexact=request.data['email']) | (Q(email__isnull=True) & ~Q(provider_type='guest') & Q(device_id=request.data['device_id'])))
+
+        # if get_user.exists():
+        #     get_user.update(**serializer.data)
+        #     return user_access_token(get_user.first(), self.get_serializer_context(), is_created=False)
+
+        # user = serializer.save()
+
+        FCM_update = {}
+        FCM_update["registration_id"] = ""
+        if "fcm_token" in request.data:
+            FCM_update["registration_id"] = request.data.get("fcm_token")
+        if "device_type" in request.data:
+            FCM_update["type"] = request.data.get("device_type")
+        if "device_id" in request.data:
+            FCM_update["device_id"] = request.data.get("device_id")
+
+        if request.data["provider_type"] == "apple":
+            if (
+                "user_identifier_key" not in request.data
+                or request.data["user_identifier_key"] == ""
+            ):
+                return Response(
+                    {"user_identifier_key": "Apple user identifier key is missing"}
+                )
+            elif User.objects.filter(
+                user_identifier_key=request.data["user_identifier_key"]
+            ).exists():
+                User.objects.filter(
+                    user_identifier_key=request.data["user_identifier_key"]
+                ).update(
+                    provider_type=request.data["provider_type"],
+                    device_id=request.data["device_id"],
+                )
+
+                user = User.objects.filter(
+                    user_identifier_key=request.data["user_identifier_key"]
+                ).first()
+
+                if FCM_update["registration_id"] != "":
+                    fcm_device_create(FCM_update, user, user.email)
+
+                return user_access_token(user, self.get_serializer_context())
+
+            else:
+                if "email" in request.data:
+                    if User.objects.filter(
+                        email__iexact=request.data["email"]
+                    ).exists():
+                        User.objects.filter(email__iexact=request.data["email"]).update(
+                            provider_type=request.data["provider_type"],
+                            user_identifier_key=request.data["user_identifier_key"],
+                            device_id=request.data["device_id"],
+                        )
+                        user = User.objects.filter(
+                            user_identifier_key=request.data["user_identifier_key"]
+                        ).first()
+
+                        if FCM_update["registration_id"] != "":
+                            fcm_device_create(FCM_update, user, user.email)
+
+                        return user_access_token(user, self.get_serializer_context())
+
+        elif User.objects.filter(email__iexact=request.data["email"]).exists():
+            if request.data["provider_type"] not in ["google", "facebook", "apple"]:
+                return Response(
+                    {
+                        "message": "Social media signin with google, facebook or apple is supported",
+                    }
+                )
+
+            User.objects.filter(email__iexact=request.data["email"]).update(
+                provider_type=request.data["provider_type"],
+                device_id=request.data["device_id"],
+            )
+
+            user = User.objects.get(email__iexact=request.data["email"])
+            if FCM_update["registration_id"] != "":
+                fcm_device_create(FCM_update, user, user.email)
+
+            return user_access_token(user, self.get_serializer_context())
+
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+
+        if FCM_update["registration_id"] != "":
+            fcm_device_create(FCM_update, user, user.email)
+        return user_access_token(user, self.get_serializer_context(), is_created=True)

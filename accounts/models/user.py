@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from ..models import UserManager
 
@@ -21,10 +21,14 @@ class User(AbstractUser):
     first_name = models.CharField(
         _("First Name"),
         max_length=255,
+        blank=True,
+        null=True,
     )
     last_name = models.CharField(
         _("Last Name"),
         max_length=255,
+        blank=True,
+        null=True,
     )
     email = models.EmailField(
         _("Email Address"),
@@ -41,12 +45,18 @@ class User(AbstractUser):
         max_length=25,
     )
     provider_type = models.CharField(
-        max_length=255, choices=PROVIDER_TYPE, default="flow_app"
+        max_length=255,
+        choices=PROVIDER_TYPE,
+        default="flow_app",
+        blank=True,
+        null=True,
     )
+    provider_user_id = models.CharField(max_length=255, blank=True)
     device_id = models.CharField(max_length=255, null=True, blank=True)
     device_type = models.CharField(
         max_length=10, choices=DEVICE_TYPE, null=True, blank=True
     )
+    user_identifier_key = models.CharField(max_length=1225, blank=True, null=True)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 

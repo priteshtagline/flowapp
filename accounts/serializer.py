@@ -7,13 +7,17 @@ from django.db.models import Q
 from django.contrib.auth.hashers import make_password
 from fcm_django.models import FCMDevice
 from backend.models.story import Story
-from . import google
 from rest_framework.exceptions import AuthenticationFailed
 import os
-from .register import register_social_user
+from flowapp import settings
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from django.contrib.auth import authenticate, get_user_model
 
 # Register serializer
 class RegisterSerializer(serializers.ModelSerializer):
+    token = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = (
@@ -26,13 +30,20 @@ class RegisterSerializer(serializers.ModelSerializer):
             "password",
             "device_id",
             "device_type",
+            "token",
         )
         extra_kwargs = {
             "password": {"write_only": True},
         }
 
+    def get_token(self, obj):
+        token = RefreshToken.for_user(obj)
+        return {
+            "refresh": str(token),
+            "access": str(token.access_token),
+        }
+
     def create(self, validated_data):
-        print("from create")
         validated_data["password"] = make_password(validated_data["password"])
         return super(RegisterSerializer, self).create(validated_data)
 
@@ -128,9 +139,10 @@ class SocialUserSerializer(serializers.ModelSerializer):
         model = User
         fields = (
             "id",
-            "full_name",
+            "first_name",
             "email",
             "provider_type",
+            "provider_user_id",
             "device_id",
             "device_type",
         )
@@ -148,6 +160,14 @@ class SocialUserSerializer(serializers.ModelSerializer):
         }
 
 
+class EmailVerificationSerializer(serializers.ModelSerializer):
+    token = serializers.CharField(max_length=555)
+
+    class Meta:
+        model = User
+        fields = ["token"]
+
+
 class FcmTokenSerializer(serializers.Serializer):
     DEVICE_TYPE = (
         ("android", "android"),
@@ -156,28 +176,3 @@ class FcmTokenSerializer(serializers.Serializer):
     registration_id = serializers.CharField(max_length=255)
     device_id = serializers.CharField(max_length=255)
     device_type = serializers.ChoiceField(choices=DEVICE_TYPE)
-
-
-class GoogleSocialAuthSerializer(serializers.Serializer):
-    auth_token = serializers.CharField()
-
-    def validate_auth_token(self, auth_token):
-        user_data = google.Google.validate(auth_token)
-        try:
-            user_data["sub"]
-        except:
-            raise serializers.ValidationError(
-                "The token is invalid or expired. Please login again."
-            )
-
-        if user_data["aud"] != os.environ.get("GOOGLE_CLIENT_ID"):
-            raise AuthenticationFailed("oops, who are you?")
-
-        user_id = user_data["sub"]
-        email = user_data["email"]
-        name = user_data["name"]
-        provider = "google"
-
-        return register_social_user(
-            provider=provider, user_id=user_id, email=email, name=name
-        )
