@@ -81,11 +81,11 @@ class RegisterApi(generics.GenericAPIView):
         if FCM_update["registration_id"] != "":
             FCM_update["device_id"] = user_re_data["device_id"]
             fcm_device_create(FCM_update, user, user_re_data["first_name"])
-        current_site = get_current_site(request).domain
+        # current_site = get_current_site(request).domain
         relativeLink = reverse("email-verify")
         absurl = (
             "http://"
-            + current_site
+            + "192.168.1.61:8000"
             + relativeLink
             + "?token="
             + str(user_re_data["token"]["access"])
@@ -101,13 +101,6 @@ class RegisterApi(generics.GenericAPIView):
             "to_email": user_re_data["email"],
             "email_subject": "Verify your email",
         }
-        send_mail(
-            data["email_subject"],
-            data["email_body"],
-            settings.EMAIL_HOST_USER,
-            [data["to_email"]],
-            fail_silently=False,
-        )
         Util.send_email(data)
         return Response(serializer.data, status=status.HTTP_201_CREATED)
         # return user_access_token(user, self.get_serializer_context(), is_created=True)
@@ -116,19 +109,15 @@ class RegisterApi(generics.GenericAPIView):
 class VerifyEmail(generics.GenericAPIView):
     serializer_class = EmailVerificationSerializer
 
-    token_param_config = openapi.Parameter(
-        "token",
-        in_=openapi.IN_QUERY,
-        description="Description",
-        type=openapi.TYPE_STRING,
-    )
-
-    @swagger_auto_schema(manual_parameters=[token_param_config])
     def get(self, request):
+        print("*" * 100)
         token = request.GET.get("token")
+        print("token", token)
         try:
             payload = jwt.decode(token, settings.SECRET_KEY)
+            print("payload", payload)
             user = User.objects.get(id=payload["user_id"])
+            print("user", user)
             if not user.is_verified:
                 user.is_verified = True
                 user.save()

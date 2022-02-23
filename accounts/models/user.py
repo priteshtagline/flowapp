@@ -57,6 +57,7 @@ class User(AbstractUser):
         max_length=10, choices=DEVICE_TYPE, null=True, blank=True
     )
     user_identifier_key = models.CharField(max_length=1225, blank=True, null=True)
+    is_verified = models.BooleanField(default=False)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
