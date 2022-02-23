@@ -90,8 +90,8 @@ pre_save.connect(update_null_to_empty_string_in_story, sender=Story)
 
 
 def update_null_to_empty_string_in_tags(sender, instance, **kwargs):
-    if instance.tags == "null" or instance.tags == None:
-        instance.tags = ""
+    if instance.name == "null" or instance.name == None:
+        instance.name = ""
 
 
 post_save.connect(update_null_to_empty_string_in_tags, sender=Tags)
