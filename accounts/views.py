@@ -1,5 +1,7 @@
 from rest_framework import generics
 from rest_framework.response import Response
+
+from backend.models.story import Story
 from .models.user import User
 from .utils import Util
 from django.contrib.sites.shortcuts import get_current_site
@@ -110,9 +112,7 @@ class VerifyEmail(generics.GenericAPIView):
     serializer_class = EmailVerificationSerializer
 
     def get(self, request):
-        print("*" * 100)
         token = request.GET.get("token")
-        print("token", token)
         try:
             payload = jwt.decode(token, settings.SECRET_KEY)
             print("payload", payload)
@@ -229,15 +229,6 @@ class SocialUserView(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return Response({"error": serializer.errors}, status=400)
-
-        # get_user = User.objects.filter(
-        #     Q(email__iexact=request.data['email']) | (Q(email__isnull=True) & ~Q(provider_type='guest') & Q(device_id=request.data['device_id'])))
-
-        # if get_user.exists():
-        #     get_user.update(**serializer.data)
-        #     return user_access_token(get_user.first(), self.get_serializer_context(), is_created=False)
-
-        # user = serializer.save()
 
         FCM_update = {}
         FCM_update["registration_id"] = ""

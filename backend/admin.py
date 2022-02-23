@@ -18,10 +18,17 @@ class TagsAdmin(admin.StackedInline):
 
 class StoryAdmin(admin.ModelAdmin):
     exclude = ["saved", "read", "update_at"]
-    list_display = ["title", "status", "status_button"]
+    list_display = ["title", "status", "status_button", "archived_deleted_tag"]
+    list_filter = ("status",)
     inlines = [
         TagsAdmin,
     ]
+
+    class Media:
+        js = (
+            "https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js",
+            "js/change.js",
+        )
 
     def status_button(self, obj):
         if not obj.status == "publish":
@@ -32,10 +39,21 @@ class StoryAdmin(admin.ModelAdmin):
             )
         else:
             return format_html(
-                '<button><a style="color:black" href="{}">{}</a></button>',
+                '<button id="pushnotificaton"><a style="color:black" href="{}">{}</a></button>',
                 f"/api/story/notifications/{obj.pk}/",
-                "Push Notification",
+                "send first notification",
             )
+
+    def archived_deleted_tag(self, obj):
+        return (
+            format_html(
+                '<button><a style="color:black" href="{}">{}</a></button>',
+                f"/api/story/deleted/{obj.pk}/",
+                "Deleted",
+            )
+            if obj.status == "publish" or obj.status == "draft"
+            else format_html("<p>Deleted with archived</p>")
+        )
 
 
 admin.site.register(Story, StoryAdmin)

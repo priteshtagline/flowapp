@@ -5,13 +5,17 @@
 
 <script>
     if ($("#id_status option[value='draft']")) {
-        $("#id_status option[value='unpublish'], #id_status option[value='archived']").hide()
+        $("#id_status option[value='unpublish'], #id_status option[value='archived', #id_status option[value='archived_deleted']").hide()
     }
     if ($("#id_status option[value='publish']")) {
         $("#id_status option[value='unpublish'],#id_status option[value='archived']").show()
         $("#id_status option[value='draft']").hide()
     }
+    if ($("#id_status option[value='archived_deleted']")){
+
+    }
 </script>
+
 {% endblock %}
 
 {% block extrahead %}{{ block.super }}

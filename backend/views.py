@@ -1,5 +1,7 @@
 from django.db.models import Q
+from django.http import response, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
+from grpc import Status
 from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
@@ -7,7 +9,6 @@ from fcm_django.models import FCMDevice
 import requests
 import json
 from backend.models.story import Story, Tags
-
 from .models.story import Story
 from .serializer import storySerializers
 from datetime import timedelta, datetime
@@ -19,6 +20,7 @@ from rest_framework import pagination
 from accounts.models.user import User
 from rest_framework.views import APIView
 import os
+from django.utils.html import strip_tags
 
 
 def set_publish_status(request, pk):
@@ -26,6 +28,14 @@ def set_publish_status(request, pk):
     Story.objects.filter(pk=pk).update(
         status="publish", expiration_time=datetime.now() + timedelta(days=1)
     )
+    return redirect("/admin/backend/story")
+
+
+def archived_deleted_tag(request, pk):
+    Story.objects.filter(pk=pk).update(
+        status="archived",
+    )
+
     return redirect("/admin/backend/story")
 
 
@@ -79,7 +89,9 @@ class SavedAPIView(APIView):
     ]
     serializer_class = storySerializers
     pagination_class = CustomPagination
-    queryset = Story.objects.all()
+    queryset = Story.objects.exclude(
+        Q(status="draft") | Q(status="unpublish")
+    ).order_by("-create_at")
 
     def get(self, request, *args, **kwargs):
         saved_user = Story.objects.filter(saved=self.request.user)
@@ -116,71 +128,23 @@ class StorySavedReadAPIView(generics.GenericAPIView):
         return Response(serializer.data)
 
 
-def prepate_notification_data(instance, notification_data_image=""):
-    return {
-        "id": instance.id,
-        "title": instance.title,
-        "content": instance.content,
-        "image": instance.image.url if instance.image else "",
-    }
+def notification_send(request, pk, *args, **kwargs):
 
-
-def prepate_notification_data(instance, notification_data_image=""):
-
-    return {
-        "id": instance.id,
-        "title": instance.title,
-        "content": instance.content,
-        "create_at": instance.create_at,
-        "image": instance.image.url if instance.image else "",
-        # "tags": json.dumps(
-        #     list(
-        #         Tags.objects.filter(story=instance.id).values(
-        #             "id",
-        #             "name",
-        #         )
-        #     )
-        # ),
-    }
-
-
-def push_notification_send(deviceTokens, notification, dataPayLoad):
     serverToken = os.getenv("FCM_SERVER_KEY")
     if serverToken:
         headers = {
             "Content-Type": "application/json",
             "Authorization": "key=" + serverToken,
         }
-
-        def divide_chunks(l, n):
-            for i in range(0, len(l), n):
-                yield l[i : i + n]
-
-        deviceTokensList = list(divide_chunks(deviceTokens, 900))
-        for fcm_token_list in deviceTokensList:
-            body = {
-                "content_available": True,
-                "mutable_content": True,
-                "notification": notification,
-                "registration_ids": fcm_token_list,
-                "priority": "high",
-                "data": dataPayLoad,
-            }
-            response = requests.post(
-                "https://fcm.googleapis.com/fcm/send",
-                headers=headers,
-                data=json.dumps(body),
-            )
-
-
-def notification_send(request, pk):
     all_devices = FCMDevice.objects.order_by("device_id", "-id").distinct("device_id")
     story_instance = Story.objects.get(pk=pk)
 
     notification_data = dict()
     notification_data["id"] = story_instance.id
     notification_data["title"] = story_instance.title
-    notification_data["body"] = story_instance.content if story_instance.content else ""
+    notification_data["body"] = (
+        strip_tags(story_instance.content) if strip_tags(story_instance.content) else ""
+    )
     notification_data["image"] = (
         story_instance.image.url if story_instance.image else ""
     )
@@ -190,9 +154,24 @@ def notification_send(request, pk):
         .values_list("registration_id", flat=True)
     )
 
-    story = prepate_notification_data(story_instance)
+    def divide_chunks(l, n):
+        for i in range(0, len(l), n):
+            yield l[i : i + n]
 
-    # push notification send all device.
-    push_notification_send(device_token_list, notification_data, story)
+    deviceTokensList = list(divide_chunks(device_token_list, 900))
+    for fcm_token_list in deviceTokensList:
+        body = {
+            "content_available": True,
+            "mutable_content": True,
+            "notification": notification_data,
+            "registration_ids": fcm_token_list,
+            "priority": "high",
+            "data": notification_data,
+        }
+        response = requests.post(
+            "https://fcm.googleapis.com/fcm/send",
+            headers=headers,
+            data=json.dumps(body),
+        )
 
     return redirect("/admin/backend/story/")

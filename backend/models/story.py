@@ -1,4 +1,3 @@
-from re import T
 from ckeditor.fields import RichTextField
 from django.core.validators import MaxLengthValidator
 from django.db import models
