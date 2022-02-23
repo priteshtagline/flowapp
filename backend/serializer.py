@@ -21,6 +21,7 @@ class storySerializers(serializers.ModelSerializer):
         fields = [
             "id",
             "title",
+            "author",
             "image",
             "content",
             "tags",

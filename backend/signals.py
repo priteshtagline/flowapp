@@ -103,5 +103,4 @@ def update_project_last_modified(sender, instance, **kwargs):
         instance.update_at = datetime.now()
 
 
-pre_save.connect(update_project_last_modified, sender=Story)
-post_delete.connect(update_project_last_modified, sender=Story)
+post_save.connect(update_project_last_modified, sender=Story, dispatch_uid="Story")

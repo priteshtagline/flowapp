@@ -1,10 +1,10 @@
-Django>=3.0,<4.0
-psycopg2>=2.8
+Django
+psycopg2==2.8.4
 djangorestframework==3.13.1
 markdown==3.3.6
 django-filter==21.1 
-djangorestframework_simplejwt==5.0.0
-django-rest-passwordreset
+djangorestframework_simplejwt>=4.3.0
+django-rest-passwordreset   
 django-allauth==0.48.0
 django-ckeditor==6.2.0
 celery==5.0.5
@@ -16,3 +16,5 @@ fcm-django<1
 django-push-notifications==3.0.0
 django-solo==2.0.0
 firebase_admin==2.8.0   
+drf-yasg==1.20.0    
+PyJWT==2.3.0

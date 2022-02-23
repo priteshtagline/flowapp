@@ -13,7 +13,7 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
-
+from celery.schedules import crontab
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -49,7 +49,9 @@ INSTALLED_APPS = [
     "fcm_django",
     "push_notifications",
     "solo",
+    "drf_yasg",
 ]
+
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -98,10 +100,6 @@ DATABASES = {
     }
 }
 
-AUTHENTICATION_BACKENDS = [
-    "django.contrib.auth.backends.ModelBackend",
-    "allauth.account.auth_backends.AuthenticationBackend",
-]
 
 SITE_ID = 1
 
@@ -145,7 +143,7 @@ STATIC_URL = "/static/"
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
 
 # Extra places for collectstatic to find static files.
-STATICFILES_DIRS = (os.path.join(BASE_DIR, "static"),)
+STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
 
 AUTH_USER_MODEL = "accounts.User"
 
@@ -157,20 +155,21 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 3,
 }
 
+EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_HOST = os.environ.get("EMAIL_HOST")
+EMAIL_PORT = os.environ.get("EMAIL_PORT")
+EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
+EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
+EMAIL_USE_TLS = True
+EMAIL_USE_SSL = False
 
-EMAIL_BACKEND = os.getenv("EMAIL_BACKEND")
-EMAIL_HOST = os.getenv("EMAIL_HOST")
-EMAIL_USE_TLS = os.getenv("EMAIL_USE_TLS")
-EMAIL_PORT = os.getenv("EMAIL_PORT")
-EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER")
-EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 
-# CELERY_BEAT_SCHEDULE = {
-#     "hello": {
-#         "task": "backend.tasks.hello",
-#         "schedule": crontab(),
-#     }  # execute every minute
-# }
+CELERY_BEAT_SCHEDULE = {
+    "hello": {
+        "task": "backend.tasks.hello",
+        "schedule": crontab(),
+    }  # execute every minute
+}
 
 # Celery set up.
 CELERY_BROKER_URL = "redis://redis:6379"

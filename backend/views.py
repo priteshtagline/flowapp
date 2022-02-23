@@ -4,8 +4,9 @@ from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from fcm_django.models import FCMDevice
-
-from backend.models.story import Story
+import requests
+import json
+from backend.models.story import Story, Tags
 
 from .models.story import Story
 from .serializer import storySerializers
@@ -17,6 +18,7 @@ from django.shortcuts import render, get_object_or_404
 from rest_framework import pagination
 from accounts.models.user import User
 from rest_framework.views import APIView
+import os
 
 
 def set_publish_status(request, pk):
@@ -81,7 +83,6 @@ class SavedAPIView(APIView):
 
     def get(self, request, *args, **kwargs):
         saved_user = Story.objects.filter(saved=self.request.user)
-        print(saved_user)
         serializer = storySerializers(saved_user, many=True)
         return Response(serializer.data)
 
@@ -124,6 +125,54 @@ def prepate_notification_data(instance, notification_data_image=""):
     }
 
 
+def prepate_notification_data(instance, notification_data_image=""):
+
+    return {
+        "id": instance.id,
+        "title": instance.title,
+        "content": instance.content,
+        "create_at": instance.create_at,
+        "image": instance.image.url if instance.image else "",
+        # "tags": json.dumps(
+        #     list(
+        #         Tags.objects.filter(story=instance.id).values(
+        #             "id",
+        #             "name",
+        #         )
+        #     )
+        # ),
+    }
+
+
+def push_notification_send(deviceTokens, notification, dataPayLoad):
+    serverToken = os.getenv("FCM_SERVER_KEY")
+    if serverToken:
+        headers = {
+            "Content-Type": "application/json",
+            "Authorization": "key=" + serverToken,
+        }
+
+        def divide_chunks(l, n):
+            for i in range(0, len(l), n):
+                yield l[i : i + n]
+
+        deviceTokensList = list(divide_chunks(deviceTokens, 900))
+        for fcm_token_list in deviceTokensList:
+            body = {
+                "content_available": True,
+                "mutable_content": True,
+                "notification": notification,
+                "registration_ids": fcm_token_list,
+                "priority": "high",
+                "data": dataPayLoad,
+            }
+            response = requests.post(
+                "https://fcm.googleapis.com/fcm/send",
+                headers=headers,
+                data=json.dumps(body),
+            )
+
+
 def notification_send(request, pk):
     all_devices = FCMDevice.objects.order_by("device_id", "-id").distinct("device_id")
     story_instance = Story.objects.get(pk=pk)
@@ -140,12 +189,10 @@ def notification_send(request, pk):
         .exclude(registration_id="null")
         .values_list("registration_id", flat=True)
     )
-    for token in device_token_list:
-        try:
-            device = FCMDevice.objects.get(registration_id=token)
-            device.send_message(notification_data)
-        except Exception as e:
-            logger.info(f"Not send push notifications {token}")
-            logger.error(str(e))
+
+    story = prepate_notification_data(story_instance)
+
+    # push notification send all device.
+    push_notification_send(device_token_list, notification_data, story)
 
     return redirect("/admin/backend/story/")

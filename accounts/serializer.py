@@ -1,16 +1,23 @@
 from dataclasses import fields
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-
+from django.core.validators import EmailValidator
 from .models import User
 from django.db.models import Q
 from django.contrib.auth.hashers import make_password
 from fcm_django.models import FCMDevice
 from backend.models.story import Story
+from rest_framework.exceptions import AuthenticationFailed
+import os
+from flowapp import settings
+from rest_framework_simplejwt.tokens import RefreshToken
 
+from django.contrib.auth import authenticate, get_user_model
 
 # Register serializer
 class RegisterSerializer(serializers.ModelSerializer):
+    token = serializers.SerializerMethodField()
+
     class Meta:
         model = User
         fields = (
@@ -23,13 +30,20 @@ class RegisterSerializer(serializers.ModelSerializer):
             "password",
             "device_id",
             "device_type",
+            "token",
         )
         extra_kwargs = {
             "password": {"write_only": True},
         }
 
+    def get_token(self, obj):
+        token = RefreshToken.for_user(obj)
+        return {
+            "refresh": str(token),
+            "access": str(token.access_token),
+        }
+
     def create(self, validated_data):
-        print("from create")
         validated_data["password"] = make_password(validated_data["password"])
         return super(RegisterSerializer, self).create(validated_data)
 
@@ -118,6 +132,40 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["first_name", "last_name", "email", "dob", "phone_number"]
+
+
+class SocialUserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = (
+            "id",
+            "first_name",
+            "email",
+            "provider_type",
+            "provider_user_id",
+            "device_id",
+            "device_type",
+        )
+        extra_kwargs = {
+            "email": {
+                "required": True,
+                "allow_blank": False,
+                "validators": [EmailValidator],
+            },
+            "provider_type": {
+                "required": True,
+                "allow_blank": False,
+            },
+            "password": {"write_only": True},
+        }
+
+
+class EmailVerificationSerializer(serializers.ModelSerializer):
+    token = serializers.CharField(max_length=555)
+
+    class Meta:
+        model = User
+        fields = ["token"]
 
 
 class FcmTokenSerializer(serializers.Serializer):

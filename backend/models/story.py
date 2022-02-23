@@ -2,7 +2,7 @@ from re import T
 from ckeditor.fields import RichTextField
 from django.core.validators import MaxLengthValidator
 from django.db import models
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 from flowapp import settings
 from solo.models import SingletonModel
 
@@ -14,10 +14,11 @@ class Story(models.Model):
     content = RichTextField(validators=[MaxLengthValidator(384)])
     image = models.ImageField(
         upload_to="story_image",
-        blank=True,
-        null=True,
         verbose_name="Images",
-        default="",
+    )
+    author = models.CharField(
+        _("Author"),
+        max_length=255,
     )
     status_choise = [
         ("publish", "publish"),
