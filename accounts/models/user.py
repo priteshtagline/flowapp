@@ -51,13 +51,14 @@ class User(AbstractUser):
         blank=True,
         null=True,
     )
-    provider_user_id = models.CharField(max_length=255, blank=True)
+    provider_user_id = models.CharField(max_length=255, null=True, blank=True)
     device_id = models.CharField(max_length=255, null=True, blank=True)
     device_type = models.CharField(
         max_length=10, choices=DEVICE_TYPE, null=True, blank=True
     )
     user_identifier_key = models.CharField(max_length=1225, blank=True, null=True)
     is_verified = models.BooleanField(default=False)
+    email_verification_code = models.CharField(max_length=10, blank=True, null=True)
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 

@@ -11,7 +11,14 @@ urlpatterns = [
         name="save-view",
     ),
     path("read/", StorySavedReadAPIView.as_view(), name="read-view"),
-    path("notifications/<int:pk>/", notification_send, name="read-view"),
+    path(
+        "notifications/<int:pk>/", notification_send, {"result": 0}, name="notification"
+    ),
+    path(
+        "deleted/<int:pk>/",
+        archived_deleted_tag,
+        name="archived_deleted_tag",
+    ),
 ]
 
 urlpatterns += [

@@ -21,6 +21,8 @@ from django.views.generic import TemplateView
 
 from .settings import MEDIA_ROOT
 from .settings import MEDIA_URL
+from .settings import STATIC_URL
+from .settings import STATIC_ROOT
 
 urlpatterns = [
     path("admin/", admin.site.urls),
@@ -28,3 +30,5 @@ urlpatterns = [
     path("api/story/", include("backend.urls")),
     path("", TemplateView.as_view(template_name="home.html")),
 ] + static(MEDIA_URL, document_root=MEDIA_ROOT)
+
+urlpatterns += static(STATIC_URL, document_root=STATIC_ROOT)

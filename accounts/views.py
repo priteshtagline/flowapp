@@ -1,5 +1,9 @@
+import email
+from gc import get_objects
 from rest_framework import generics
 from rest_framework.response import Response
+
+from backend.models.story import Story
 from .models.user import User
 from .utils import Util
 from django.contrib.sites.shortcuts import get_current_site
@@ -9,6 +13,7 @@ from drf_yasg.utils import swagger_auto_schema
 from drf_yasg import openapi
 from django.core.mail import EmailMessage, send_mail
 from flowapp import settings
+from django.contrib.auth.hashers import make_password
 from .serializer import (
     RegisterSerializer,
     UserSerializer,
@@ -18,6 +23,8 @@ from .serializer import (
     FcmTokenSerializer,
     SocialUserSerializer,
     EmailVerificationSerializer,
+    ForgotPasswordEmailSendSerializer,
+    EmailVerificationForgotPasswordSerializer,
 )
 from rest_framework_simplejwt.views import (
     TokenObtainPairView,
@@ -31,6 +38,7 @@ from .serializer import ChangePasswordSerializer
 from rest_framework.permissions import IsAuthenticated
 from push_notifications.models import APNSDevice, GCMDevice
 from fcm_django.models import FCMDevice
+import random
 
 
 def fcm_device_create(fcm_array, user, name):
@@ -67,9 +75,11 @@ class RegisterApi(generics.GenericAPIView):
                 },
                 status=400,
             )
-        user = serializer.save()
+        users = serializer.save()
         user_data = serializer.data
         user_re_data = dict(user_data)
+        user = User.objects.get(email=user_data["email"])
+        token = RefreshToken.for_user(user).access_token
 
         FCM_update = {}
         FCM_update["registration_id"] = ""
@@ -80,25 +90,16 @@ class RegisterApi(generics.GenericAPIView):
 
         if FCM_update["registration_id"] != "":
             FCM_update["device_id"] = user_re_data["device_id"]
-            fcm_device_create(FCM_update, user, user_re_data["first_name"])
-        # current_site = get_current_site(request).domain
+            fcm_device_create(FCM_update, users, user_re_data["first_name"])
+        current_site = get_current_site(request).domain
         relativeLink = reverse("email-verify")
-        absurl = (
-            "http://"
-            + "192.168.1.61:8000"
-            + relativeLink
-            + "?token="
-            + str(user_re_data["token"]["access"])
-        )
+        absurl = "http://" + current_site + relativeLink + "?token=" + str(token)
         email_body = (
-            "Hi "
-            + user_re_data["email"]
-            + " Use the link below to verify your email \n"
-            + absurl
+            "Hi " + user.email + " Use the link below to verify your email \n" + absurl
         )
         data = {
             "email_body": email_body,
-            "to_email": user_re_data["email"],
+            "to_email": user.email,
             "email_subject": "Verify your email",
         }
         Util.send_email(data)
@@ -107,20 +108,14 @@ class RegisterApi(generics.GenericAPIView):
 
 
 class VerifyEmail(generics.GenericAPIView):
-    serializer_class = EmailVerificationSerializer
-
     def get(self, request):
-        print("*" * 100)
         token = request.GET.get("token")
-        print("token", token)
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY)
-            print("payload", payload)
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
             user = User.objects.get(id=payload["user_id"])
-            print("user", user)
-            if not user.is_verified:
-                user.is_verified = True
-                user.save()
+            user.is_active = True
+            user.is_verified = True
+            user.save()
             return Response(
                 {"email": "Successfully activated"}, status=status.HTTP_200_OK
             )
@@ -221,23 +216,10 @@ class FCMTokenAPI(generics.CreateAPIView):
 class SocialUserView(generics.GenericAPIView):
     serializer_class = SocialUserSerializer
 
-
-class SocialUserView(generics.GenericAPIView):
-    serializer_class = SocialUserSerializer
-
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         if not serializer.is_valid():
             return Response({"error": serializer.errors}, status=400)
-
-        # get_user = User.objects.filter(
-        #     Q(email__iexact=request.data['email']) | (Q(email__isnull=True) & ~Q(provider_type='guest') & Q(device_id=request.data['device_id'])))
-
-        # if get_user.exists():
-        #     get_user.update(**serializer.data)
-        #     return user_access_token(get_user.first(), self.get_serializer_context(), is_created=False)
-
-        # user = serializer.save()
 
         FCM_update = {}
         FCM_update["registration_id"] = ""
@@ -320,3 +302,81 @@ class SocialUserView(generics.GenericAPIView):
         if FCM_update["registration_id"] != "":
             fcm_device_create(FCM_update, user, user.email)
         return user_access_token(user, self.get_serializer_context(), is_created=True)
+
+
+class ForgotPassword(generics.GenericAPIView):
+    serializer_class = ForgotPasswordEmailSendSerializer
+    queryset = User.objects.all()
+
+    def get_object(self):
+        return User.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.data
+        if not instance.filter(email=user["email"]).exists():
+            return Response(status.HTTP_400_BAD_REQUEST)
+        else:
+            random_id = " ".join(
+                [str(random.randint(0, 999)).zfill(3) for _ in range(2)]
+            )
+            instance.filter(email=user["email"]).update(
+                email_verification_code=random_id
+            )
+            user_from_model = instance.get(email=user["email"])
+
+            email_body = (
+                "Hi "
+                + "CODE :- "
+                + user_from_model.email_verification_code
+                + " Use the link below to verify your email \n"
+            )
+            data = {
+                "email_body": email_body,
+                "to_email": user_from_model.email,
+                "email_subject": "Verify code for forgot password",
+            }
+            Util.send_email(data)
+            response = {
+                "status": "success",
+                "code": status.HTTP_200_OK,
+                "message": "Password updated successfully",
+                "data": [],
+            }
+        return Response(response)
+
+
+class ForgotPasswordConfirm(generics.UpdateAPIView):
+    serializer_class = EmailVerificationForgotPasswordSerializer
+    queryset = User.objects.all()
+
+    def get_object(self):
+        return User.objects.all()
+
+    def post(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        verification = serializer.data
+        user = instance.get(email=verification["email"])
+
+        if user.email_verification_code != verification["verification_code"]:
+            response = {
+                "status": "fail",
+                "code": status.HTTP_400_BAD_REQUEST,
+                "message": "please enter right verification code",
+            }
+            return Response(response)
+        else:
+            instance.filter(email=verification["email"]).update(
+                password=make_password(verification["password"]),
+                email_verification_code="",
+            )
+            response = {
+                "status": "success",
+                "code": status.HTTP_200_OK,
+                "message": "Password updated successfully",
+            }
+        return Response(response)

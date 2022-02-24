@@ -1,4 +1,3 @@
-from re import T
 from ckeditor.fields import RichTextField
 from django.core.validators import MaxLengthValidator
 from django.db import models
@@ -42,8 +41,11 @@ class Story(models.Model):
         related_name="read",
         blank=True,
     )
-    create_at = models.DateTimeField(auto_now_add=True)
-    update_at = models.DateTimeField(blank=True, null=True)
+    notification_count = models.CharField(
+        _("Notification_count"), default=1, null=True, blank=True, max_length=2
+    )
+    create_at = models.DateTimeField(auto_now_add=True, editable=False)
+    update_at = models.DateTimeField(auto_now=True, null=True, blank=True)
 
     class Meta:
         verbose_name = _("Story")
