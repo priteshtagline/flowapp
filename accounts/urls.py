@@ -8,8 +8,11 @@ from .views import (
     FCMTokenAPI,
     SocialUserView,
     VerifyEmail,
+    ForgotPassword,
+    ForgotPasswordConfirm,
 )
 from django.urls import path, include
+from django.views.decorators.csrf import csrf_exempt
 
 
 urlpatterns = [
@@ -18,9 +21,11 @@ urlpatterns = [
     path(
         "api/token/refresh/", jwt_views.TokenRefreshView.as_view(), name="token_refresh"
     ),
+    path("api/forgot_password/", ForgotPassword.as_view(), name="forgot_password"),
     path(
-        "api/password_reset/",
-        include("django_rest_passwordreset.urls", namespace="password_reset"),
+        "api/forgot_password/confirm/",
+        ForgotPasswordConfirm.as_view(),
+        name="forgot_password_confirm",
     ),
     path("api/change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("api/profile/", UserProfileView.as_view(), name="UserProfile"),
@@ -30,5 +35,5 @@ urlpatterns = [
         SocialUserView.as_view(),
         name="social_media_signin",
     ),
-    path("email-verify/", VerifyEmail.as_view(), name="email-verify"),
+    path("email-verify/", csrf_exempt(VerifyEmail.as_view()), name="email-verify"),
 ]

@@ -1,3 +1,4 @@
+from email import message
 from django.db.models import Q
 from django.http import response, HttpResponse, HttpResponseRedirect
 from django.shortcuts import redirect
@@ -21,6 +22,7 @@ from accounts.models.user import User
 from rest_framework.views import APIView
 import os
 from django.utils.html import strip_tags
+from django.contrib import messages
 
 
 def set_publish_status(request, pk):
@@ -130,6 +132,8 @@ class StorySavedReadAPIView(generics.GenericAPIView):
 
 def notification_send(request, pk, *args, **kwargs):
 
+    success_url = "/admin/backend/story/"
+
     serverToken = os.getenv("FCM_SERVER_KEY")
     if serverToken:
         headers = {
@@ -173,5 +177,18 @@ def notification_send(request, pk, *args, **kwargs):
             headers=headers,
             data=json.dumps(body),
         )
-
-    return redirect("/admin/backend/story/")
+        notification_inc = story_instance.notification_count
+        Story.objects.filter(pk=pk).update(
+            notification_count="2"
+        ) if notification_inc == "1" or notification_inc == "null" else Story.objects.filter(
+            pk=pk
+        ).update(
+            notification_count="3"
+        )
+    return redirect(
+        "/admin/backend/story/",
+        messages.success(
+            request,
+            f"{notification_inc} Notification sent successfully {response.content}",
+        ),
+    )

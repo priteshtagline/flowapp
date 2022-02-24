@@ -1,4 +1,5 @@
 from dataclasses import fields
+from django.forms import models
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.core.validators import EmailValidator
@@ -11,13 +12,13 @@ from rest_framework.exceptions import AuthenticationFailed
 import os
 from flowapp import settings
 from rest_framework_simplejwt.tokens import RefreshToken
+import random
+from django.contrib.auth.password_validation import validate_password
 
 from django.contrib.auth import authenticate, get_user_model
 
 # Register serializer
 class RegisterSerializer(serializers.ModelSerializer):
-    token = serializers.SerializerMethodField()
-
     class Meta:
         model = User
         fields = (
@@ -30,22 +31,21 @@ class RegisterSerializer(serializers.ModelSerializer):
             "password",
             "device_id",
             "device_type",
-            "token",
         )
         extra_kwargs = {
             "password": {"write_only": True},
         }
 
-    def get_token(self, obj):
-        token = RefreshToken.for_user(obj)
-        return {
-            "refresh": str(token),
-            "access": str(token.access_token),
-        }
-
     def create(self, validated_data):
         validated_data["password"] = make_password(validated_data["password"])
+        validated_data["is_active"] = False
         return super(RegisterSerializer, self).create(validated_data)
+
+    def to_representation(self, data):
+        data = super(RegisterSerializer, self).to_representation(data)
+        if data["dob"] == "null" or data["dob"] == None:
+            data["dob"] = ""
+        return data
 
 
 # User serializer
@@ -98,7 +98,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         users = User.objects.filter(Q(email__iexact=kwargs["data"]["email"]))
         user = users.first()
-        # users.update(device_type=kwargs["data"]["device_type"])
         if user and user.check_password(kwargs["data"]["email"]):
             if FCM_update["registration_id"] != "":
                 FCM_update["user"] = user
@@ -161,11 +160,40 @@ class SocialUserSerializer(serializers.ModelSerializer):
 
 
 class EmailVerificationSerializer(serializers.ModelSerializer):
-    token = serializers.CharField(max_length=555)
+    token = serializers.CharField(max_length=1225)
 
     class Meta:
         model = User
         fields = ["token"]
+
+
+class ForgotPasswordEmailSendSerializer(serializers.ModelSerializer):
+    email = serializers.CharField(required=True)
+
+    class Meta:
+        model = User
+        fields = ["email"]
+
+
+class EmailVerificationForgotPasswordSerializer(serializers.ModelSerializer):
+    email = serializers.CharField(required=True)
+    verification_code = serializers.CharField(required=True)
+    password = serializers.CharField(validators=[validate_password], required=True)
+    password_conf = serializers.CharField(required=True)
+
+    class Meta:
+        model = User
+        fields = [
+            "verification_code",
+            "password",
+            "password_conf",
+            "email",
+        ]
+
+    def validate(self, attrs):
+        if attrs["password"] != attrs["password_conf"]:
+            raise serializers.ValidationError({"password": "password did not match"})
+        return super().validate(attrs)
 
 
 class FcmTokenSerializer(serializers.Serializer):
