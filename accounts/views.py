@@ -103,8 +103,12 @@ class RegisterApi(generics.GenericAPIView):
             "email_subject": "Verify your email",
         }
         Util.send_email(data)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
-        # return user_access_token(user, self.get_serializer_context(), is_created=True)
+        response = {
+            "status": "success",
+            "code": status.HTTP_201_CREATED,
+            "message": "Verification link sent successfully",
+        }
+        return Response(response)
 
 
 class VerifyEmail(generics.GenericAPIView):
@@ -342,8 +346,7 @@ class ForgotPassword(generics.GenericAPIView):
             response = {
                 "status": "success",
                 "code": status.HTTP_200_OK,
-                "message": "Password updated successfully",
-                "data": [],
+                "message": "Email sent successfully",
             }
         return Response(response)
 
