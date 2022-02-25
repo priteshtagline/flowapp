@@ -34,7 +34,11 @@ def set_publish_status(request, pk):
     Story.objects.filter(pk=pk).update(
         status="publish",
         expiration_time=datetime.now() + timedelta(days=1),
-        archived_with_delete=False if archived_with_deleted_tag == True else "",
+    )
+    Story.objects.filter(pk=pk).update(
+        archived_with_delete=False
+    ) if archived_with_deleted_tag == True else Story.objects.filter(pk=pk).update(
+        archived_with_delete=False
     )
     return redirect("/admin/backend/story")
 
