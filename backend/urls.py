@@ -19,8 +19,5 @@ urlpatterns = [
         archived_deleted_tag,
         name="archived_deleted_tag",
     ),
-]
-
-urlpatterns += [
     path("saved_list/", SavedAPIView.as_view(), name="saved_list"),
 ]

@@ -42,14 +42,11 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "django.contrib.sites",
-    "django_rest_passwordreset",
     "ckeditor",
     "backend",
     "accounts",
     "fcm_django",
     "push_notifications",
-    "solo",
-    "drf_yasg",
 ]
 
 
@@ -157,13 +154,13 @@ REST_FRAMEWORK = {
     "PAGE_SIZE": 3,
 }
 
-EMAIL_BACKEND = "django.core.mail.backends.smtp.EmailBackend"
+EMAIL_BACKEND = os.environ.get("EMAIL_BACKEND")
 EMAIL_HOST = os.environ.get("EMAIL_HOST")
 EMAIL_PORT = os.environ.get("EMAIL_PORT")
 EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
-EMAIL_USE_TLS = True
-EMAIL_USE_SSL = False
+EMAIL_USE_TLS = os.environ.get("EMAIL_USE_TLS")
+EMAIL_USE_SSL = os.environ.get("EMAIL_USE_SSL")
 
 
 CELERY_BEAT_SCHEDULE = {

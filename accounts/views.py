@@ -1,17 +1,9 @@
-import email
-from gc import get_objects
 from rest_framework import generics
 from rest_framework.response import Response
-
-from backend.models.story import Story
 from .models.user import User
 from .utils import Util
-from django.contrib.sites.shortcuts import get_current_site
 from django.urls import reverse
 import jwt
-from drf_yasg.utils import swagger_auto_schema
-from drf_yasg import openapi
-from django.core.mail import EmailMessage, send_mail
 from flowapp import settings
 from django.contrib.auth.hashers import make_password
 from .serializer import (
@@ -22,7 +14,6 @@ from .serializer import (
     UserProfileSerializer,
     FcmTokenSerializer,
     SocialUserSerializer,
-    EmailVerificationSerializer,
     ForgotPasswordEmailSendSerializer,
     EmailVerificationForgotPasswordSerializer,
 )
@@ -39,7 +30,7 @@ from rest_framework.permissions import IsAuthenticated
 from push_notifications.models import APNSDevice, GCMDevice
 from fcm_django.models import FCMDevice
 import random
-from django.contrib.sites.models import Site
+from rest_framework.renderers import TemplateHTMLRenderer
 
 
 def fcm_device_create(fcm_array, user, name):
@@ -88,7 +79,6 @@ class RegisterApi(generics.GenericAPIView):
             FCM_update["registration_id"] = request.data["fcm_token"]
         if "device_type" in request.data:
             FCM_update["type"] = request.data["device_type"]
-
         if FCM_update["registration_id"] != "":
             FCM_update["device_id"] = user_re_data["device_id"]
             fcm_device_create(FCM_update, users, user_re_data["first_name"])
@@ -113,24 +103,33 @@ class RegisterApi(generics.GenericAPIView):
 
 
 class VerifyEmail(generics.GenericAPIView):
+    renderer_classes = [TemplateHTMLRenderer]
+
     def get(self, request):
         token = request.GET.get("token")
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
             user = User.objects.get(id=payload["user_id"])
-            user.is_active = True
-            user.is_verified = True
-            user.save()
+            if not user.is_active == True or user.is_verified == True:
+                user.is_active = True
+                user.is_verified = True
+                user.save()
             return Response(
-                {"email": "Successfully activated"}, status=status.HTTP_200_OK
+                {"email": "Successfully activated"},
+                template_name="signup_verification.html",
+                status=status.HTTP_200_OK,
             )
         except jwt.ExpiredSignatureError as identifier:
             return Response(
-                {"error": "Activation Expired"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "Activation Expired"},
+                template_name="signup_verification.html",
+                status=status.HTTP_400_BAD_REQUEST,
             )
         except jwt.exceptions.DecodeError as identifier:
             return Response(
-                {"error": "Invalid token"}, status=status.HTTP_400_BAD_REQUEST
+                {"error": "Invalid token"},
+                template_name="signup_verification.html",
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
 
@@ -170,7 +169,6 @@ class ChangePasswordView(generics.UpdateAPIView):
                 "status": "success",
                 "code": status.HTTP_200_OK,
                 "message": "Password updated successfully",
-                "data": [],
             }
 
             return Response(response)
@@ -347,7 +345,7 @@ class ForgotPassword(generics.GenericAPIView):
             response = {
                 "status": "success",
                 "code": status.HTTP_200_OK,
-                "message": "Email sent successfully",
+                "message": "Verification code sent successfully",
             }
         return Response(response)
 

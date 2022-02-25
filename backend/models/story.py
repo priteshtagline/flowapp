@@ -3,7 +3,6 @@ from django.core.validators import MaxLengthValidator
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from flowapp import settings
-from solo.models import SingletonModel
 
 
 class Story(models.Model):
@@ -46,6 +45,7 @@ class Story(models.Model):
     )
     create_at = models.DateTimeField(auto_now_add=True, editable=False)
     update_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+    archived_with_delete = models.BooleanField(default=False)
 
     class Meta:
         verbose_name = _("Story")
@@ -66,22 +66,3 @@ class Tags(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class PushNotification(SingletonModel):
-    title = models.CharField(max_length=255, help_text="Add notification title here.")
-    message = models.TextField(help_text="Add notification message here.")
-    image = models.ImageField(upload_to="notification_image", null=True, blank=True)
-    story = models.ForeignKey(
-        Story,
-        related_name="story",
-        on_delete=models.CASCADE,
-        blank=True,
-        null=True,
-    )
-
-    def __str__(self):
-        return f"Push Notification {self.title}"
-
-    class Meta:
-        verbose_name = "Send Push Notification"

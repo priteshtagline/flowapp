@@ -27,18 +27,20 @@ from django.contrib.sites.models import Site
 
 
 def set_publish_status(request, pk):
+
     """Update story status."""
+    stories = Story.objects.get(pk=pk)
+    archived_with_deleted_tag = stories.archived_with_delete
     Story.objects.filter(pk=pk).update(
-        status="publish", expiration_time=datetime.now() + timedelta(days=1)
+        status="publish",
+        expiration_time=datetime.now() + timedelta(days=1),
+        archived_with_delete=False if archived_with_deleted_tag == True else "",
     )
     return redirect("/admin/backend/story")
 
 
 def archived_deleted_tag(request, pk):
-    Story.objects.filter(pk=pk).update(
-        status="archived",
-    )
-
+    Story.objects.filter(pk=pk).update(status="archived", archived_with_delete=True)
     return redirect("/admin/backend/story")
 
 
@@ -93,7 +95,7 @@ class SavedAPIView(APIView):
     serializer_class = storySerializers
     pagination_class = CustomPagination
     queryset = Story.objects.exclude(
-        Q(status="draft") | Q(status="unpublish")
+        Q(status="draft") | Q(status="unpublish") | Q(archived_with_delete=True)
     ).order_by("-create_at")
 
     def get(self, request, *args, **kwargs):

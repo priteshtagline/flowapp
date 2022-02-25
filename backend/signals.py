@@ -1,6 +1,5 @@
 from django.db.models.signals import post_save, pre_save
-from backend.models.story import Story, Tags
-from datetime import datetime
+from backend.models.story import Tags
 
 
 def update_null_to_empty_string_in_tags(sender, instance, **kwargs):

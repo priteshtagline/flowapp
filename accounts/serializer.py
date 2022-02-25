@@ -93,8 +93,6 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         FCM_update["registration_id"] = ""
         if "fcm_token" in kwargs["data"]:
             FCM_update["registration_id"] = kwargs["data"]["fcm_token"]
-        if "device_type" in kwargs["data"]:
-            FCM_update["type"] = kwargs["data"]["device_type"]
 
         users = User.objects.filter(Q(email__iexact=kwargs["data"]["email"]))
         user = users.first()
@@ -157,14 +155,6 @@ class SocialUserSerializer(serializers.ModelSerializer):
             },
             "password": {"write_only": True},
         }
-
-
-class EmailVerificationSerializer(serializers.ModelSerializer):
-    token = serializers.CharField(max_length=1225)
-
-    class Meta:
-        model = User
-        fields = ["token"]
 
 
 class ForgotPasswordEmailSendSerializer(serializers.ModelSerializer):

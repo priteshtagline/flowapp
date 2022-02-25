@@ -1,5 +1,4 @@
-from django.core.mail import EmailMessage, send_mail
-from flowapp import settings
+from django.core.mail import EmailMessage
 import threading
 
 
