@@ -11,7 +11,7 @@ from .views import (
     ForgotPassword,
     ForgotPasswordConfirm,
 )
-from django.urls import path, include
+from django.urls import path
 from django.views.decorators.csrf import csrf_exempt
 
 
