@@ -39,6 +39,7 @@ from rest_framework.permissions import IsAuthenticated
 from push_notifications.models import APNSDevice, GCMDevice
 from fcm_django.models import FCMDevice
 import random
+from django.contrib.sites.models import Site
 
 
 def fcm_device_create(fcm_array, user, name):
@@ -91,7 +92,7 @@ class RegisterApi(generics.GenericAPIView):
         if FCM_update["registration_id"] != "":
             FCM_update["device_id"] = user_re_data["device_id"]
             fcm_device_create(FCM_update, users, user_re_data["first_name"])
-        current_site = get_current_site(request).domain
+        current_site = request.META["HTTP_HOST"]
         relativeLink = reverse("email-verify")
         absurl = "http://" + current_site + relativeLink + "?token=" + str(token)
         email_body = (
