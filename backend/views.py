@@ -23,6 +23,7 @@ from rest_framework.views import APIView
 import os
 from django.utils.html import strip_tags
 from django.contrib import messages
+from django.contrib.sites.models import Site
 
 
 def set_publish_status(request, pk):
@@ -131,8 +132,6 @@ class StorySavedReadAPIView(generics.GenericAPIView):
 
 
 def notification_send(request, pk, *args, **kwargs):
-
-    success_url = "/admin/backend/story/"
 
     serverToken = os.getenv("FCM_SERVER_KEY")
     if serverToken:
