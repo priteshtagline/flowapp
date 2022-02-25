@@ -163,32 +163,41 @@ def notification_send(request, pk, *args, **kwargs):
             yield l[i : i + n]
 
     deviceTokensList = list(divide_chunks(device_token_list, 900))
-    for fcm_token_list in deviceTokensList:
-        body = {
-            "content_available": True,
-            "mutable_content": True,
-            "notification": notification_data,
-            "registration_ids": fcm_token_list,
-            "priority": "high",
-            "data": notification_data,
-        }
-        response = requests.post(
-            "https://fcm.googleapis.com/fcm/send",
-            headers=headers,
-            data=json.dumps(body),
+    if deviceTokensList:
+        for fcm_token_list in deviceTokensList:
+            body = {
+                "content_available": True,
+                "mutable_content": True,
+                "notification": notification_data,
+                "registration_ids": fcm_token_list,
+                "priority": "high",
+                "data": notification_data,
+            }
+            response = requests.post(
+                "https://fcm.googleapis.com/fcm/send",
+                headers=headers,
+                data=json.dumps(body),
+            )
+            notification_inc = story_instance.notification_count
+            Story.objects.filter(pk=pk).update(
+                notification_count="2"
+            ) if notification_inc == "1" or notification_inc == "null" else Story.objects.filter(
+                pk=pk
+            ).update(
+                notification_count="3"
+            )
+        return redirect(
+            "/admin/backend/story/",
+            messages.success(
+                request,
+                f"{notification_inc} Notification sent successfully",
+            ),
         )
-        notification_inc = story_instance.notification_count
-        Story.objects.filter(pk=pk).update(
-            notification_count="2"
-        ) if notification_inc == "1" or notification_inc == "null" else Story.objects.filter(
-            pk=pk
-        ).update(
-            notification_count="3"
+    else:
+        return redirect(
+            "/admin/backend/story/",
+            messages.error(
+                request,
+                f"FCM token not found.",
+            ),
         )
-    return redirect(
-        "/admin/backend/story/",
-        messages.success(
-            request,
-            f"{notification_inc} Notification sent successfully {response.content}",
-        ),
-    )
