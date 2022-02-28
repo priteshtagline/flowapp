@@ -6,6 +6,7 @@ from datetime import datetime
 
 @shared_task
 def hello():
-    Story.objects.filter(
+    story = Story.objects.filter(
         status__exact="publish", expiration_time__lt=datetime.now()
     ).update(status="archived")
+    print(story)
