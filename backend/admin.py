@@ -14,7 +14,13 @@ class TagsAdmin(admin.StackedInline):
 
 
 class StoryAdmin(admin.ModelAdmin):
-    exclude = ["saved", "read", "update_at", "notification_count"]
+    exclude = [
+        "saved",
+        "read",
+        "update_at",
+        "notification_count",
+        "archived_with_delete",
+    ]
     list_display = [
         "title",
         "status",
@@ -63,7 +69,7 @@ class StoryAdmin(admin.ModelAdmin):
                 f"/api/story/deleted/{obj.pk}/",
                 "Deleted",
             )
-            if obj.status == "publish" or obj.status == "draft"
+            if obj.archived_with_delete == False
             else format_html("<p>Deleted with archived</p>")
         )
 
