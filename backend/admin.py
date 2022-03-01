@@ -27,6 +27,7 @@ class StoryAdmin(admin.ModelAdmin):
         "status_button",
         "archived_with_delete",
         "archived_deleted_tag",
+        "expiration_time",
     ]
     list_filter = ("status",)
     inlines = [
