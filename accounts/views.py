@@ -12,7 +12,6 @@ from .serializer import (
     CustomTokenObtainPairSerializer,
     ChangePasswordSerializer,
     UserProfileSerializer,
-    FcmTokenSerializer,
     SocialUserSerializer,
     ForgotPasswordEmailSendSerializer,
     EmailVerificationForgotPasswordSerializer,
@@ -27,7 +26,6 @@ from rest_framework import generics
 from rest_framework.response import Response
 from .serializer import ChangePasswordSerializer
 from rest_framework.permissions import IsAuthenticated
-from push_notifications.models import APNSDevice, GCMDevice
 from fcm_django.models import FCMDevice
 import random
 from rest_framework.renderers import TemplateHTMLRenderer
@@ -183,37 +181,6 @@ class UserProfileView(generics.RetrieveUpdateDestroyAPIView):
 
     def get_object(self):
         return self.request.user
-
-
-class FCMTokenAPI(generics.CreateAPIView):
-    serializer_class = FcmTokenSerializer
-
-    def post(self, request, format=None):
-        serializer = self.get_serializer(data=request.data)
-        if not serializer.is_valid():
-            return Response({"error": serializer.errors}, status=400)
-        fcm_data = serializer.data
-        user = self.request.user
-
-        default = {"registration_id": fcm_data["registration_id"]}
-        if self.request.user.id:
-            default["user"] = self.request.user
-
-        try:
-            if fcm_data["device_type"] == "ios":
-                APNSDevice.objects.update_or_create(
-                    device_id=fcm_data["device_id"], defaults=default
-                )
-            else:
-                GCMDevice.objects.update_or_create(
-                    device_id=fcm_data["device_id"],
-                    cloud_message_type="FCM",
-                    defaults=default,
-                )
-        except:
-            return Response({"error": {"device_id": ["device id is invalid"]}})
-
-        return Response(serializer.data)
 
 
 class SocialUserView(generics.GenericAPIView):

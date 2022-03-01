@@ -184,13 +184,3 @@ class EmailVerificationForgotPasswordSerializer(serializers.ModelSerializer):
         if attrs["password"] != attrs["password_conf"]:
             raise serializers.ValidationError({"password": "password did not match"})
         return super().validate(attrs)
-
-
-class FcmTokenSerializer(serializers.Serializer):
-    DEVICE_TYPE = (
-        ("android", "android"),
-        ("ios", "ios"),
-    )
-    registration_id = serializers.CharField(max_length=255)
-    device_id = serializers.CharField(max_length=255)
-    device_type = serializers.ChoiceField(choices=DEVICE_TYPE)

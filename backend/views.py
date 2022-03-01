@@ -34,6 +34,7 @@ def set_publish_status(request, pk):
     Story.objects.filter(pk=pk).update(
         status="publish",
         expiration_time=datetime.now() + timedelta(days=1),
+        update_at=datetime.now(),
     )
     Story.objects.filter(pk=pk).update(
         archived_with_delete=False

@@ -5,7 +5,6 @@ from .views import (
     CustomTokenObtainPairView,
     ChangePasswordView,
     UserProfileView,
-    FCMTokenAPI,
     SocialUserView,
     VerifyEmail,
     ForgotPassword,
@@ -29,7 +28,6 @@ urlpatterns = [
     ),
     path("api/change-password/", ChangePasswordView.as_view(), name="change-password"),
     path("api/profile/", UserProfileView.as_view(), name="UserProfile"),
-    path("device-register/", FCMTokenAPI.as_view(), name="device_fcm_register"),
     path(
         "signin/social-media/",
         SocialUserView.as_view(),
