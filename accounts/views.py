@@ -320,9 +320,14 @@ class ForgotPassword(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         user = serializer.data
         if not instance.filter(email=user["email"]).exists():
-            return Response(status.HTTP_400_BAD_REQUEST)
+            response = {
+                "status": "fail",
+                "code": status.HTTP_400_BAD_REQUEST,
+                "message": "Email doesn't exists",
+            }
+            return Response(response)
         else:
-            random_id = " ".join(
+            random_id = "".join(
                 [str(random.randint(0, 999)).zfill(3) for _ in range(2)]
             )
             instance.filter(email=user["email"]).update(
