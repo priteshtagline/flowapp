@@ -46,7 +46,6 @@ INSTALLED_APPS = [
     "backend",
     "accounts",
     "fcm_django",
-    "push_notifications",
 ]
 
 
