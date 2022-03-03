@@ -96,7 +96,7 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
 
         users = User.objects.filter(Q(email__iexact=kwargs["data"]["email"]))
         user = users.first()
-        if user or user.check_password(kwargs["data"]["email"]):
+        if user:
             if FCM_update["registration_id"] != "":
                 FCM_update["user"] = user
                 FCM_update["device_id"] = user.device_id
