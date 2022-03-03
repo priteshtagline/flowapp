@@ -20,6 +20,7 @@ class StoryAdmin(admin.ModelAdmin):
         "update_at",
         "notification_count",
         "archived_with_delete",
+        "publish_at",
     ]
     list_display = [
         "title",
