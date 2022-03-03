@@ -4,13 +4,26 @@
 {{ block.super }}
 
 <script>
-    if ($("#id_status option[value='draft']")) {
-        $("#id_status option[value='unpublish'], #id_status option[value='archived']").hide()
+    console.log($("#id_status :selected").text());
+    if ($("#id_status :selected").text() == "draft" ){
+        $("#id_status option[value='unpublish']").hide();
+        $("#id_status option[value='archived']").hide();
+    } 
+    if($("#id_status :selected").text() == "publish"){
+        $("#id_status option[value='archived']").hide();
+        $("#id_status option[value='draft']").hide();
     }
-    if ($("#id_status option[value='publish']")) {
-        $("#id_status option[value='unpublish'],#id_status option[value='archived']").show()
-        $("#id_status option[value='draft']").hide()
+    if($("#id_status :selected").text() == "unpublish"){
+        $("#id_status option[value='archived']").hide();
+        $("#id_status option[value='draft']").hide();
     }
+    if($("#id_status :selected").text() == "archived"){
+        $("#id_status option[value='publish']").hide();
+        $("#id_status option[value='unpublish']").hide();
+        $("#id_status option[value='draft']").hide();
+    }
+
+
 </script>
 
 {% endblock %}
@@ -18,6 +31,5 @@
 {% block extrahead %}{{ block.super }}
 <script type="text/javascript" src="{% url 'admin:jsi18n' %}"></script>
 <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-
 {{ media }}
 {% endblock %}
