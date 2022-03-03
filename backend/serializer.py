@@ -29,6 +29,7 @@ class storySerializers(serializers.ModelSerializer):
             "saved",
             "create_at",
             "update_at",
+            "publish_at",
         ]
 
     def get_tags(self, obj):
@@ -40,4 +41,6 @@ class storySerializers(serializers.ModelSerializer):
         data["content"] = BeautifulSoup(data["content"], "html.parser").get_text()
         if data["update_at"] == "null" or data["update_at"] == None:
             data["update_at"] = ""
+        if data["publish_at"] == "null" or data["publish_at"] == None:
+            data["publish_at"] = ""
         return data

@@ -45,6 +45,7 @@ class Story(models.Model):
     )
     create_at = models.DateTimeField(auto_now_add=True, editable=False)
     update_at = models.DateTimeField(auto_now=True, null=True, blank=True)
+    publish_at = models.DateTimeField(null=True, blank=True)
     archived_with_delete = models.BooleanField(default=False)
 
     class Meta:
