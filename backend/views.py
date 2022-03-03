@@ -89,7 +89,10 @@ class StoryView(generics.ListAPIView):
 
     def get_queryset(self):
         return Story.objects.exclude(
-            Q(status="draft") | Q(status="unpublish") | Q(status="archived")
+            Q(status="draft")
+            | Q(status="unpublish")
+            | Q(status="archived")
+            | Q(archived_with_delete=True)
         ).order_by("-create_at")
 
 
