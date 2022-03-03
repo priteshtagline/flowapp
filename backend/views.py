@@ -102,12 +102,14 @@ class SavedAPIView(APIView):
     ]
     serializer_class = storySerializers
     pagination_class = CustomPagination
-    queryset = Story.objects.exclude(
-        Q(status="draft") | Q(status="unpublish") | Q(archived_with_delete=True)
-    ).order_by("-create_at")
 
     def get(self, request, *args, **kwargs):
-        saved_user = Story.objects.filter(saved=self.request.user)
+        saved_user = Story.objects.filter(
+            ~Q(status="draft"),
+            ~Q(status="unpublish"),
+            ~Q(archived_with_delete=True),
+            saved=self.request.user,
+        ).order_by("-create_at")
         serializer = storySerializers(saved_user, many=True)
         return Response(serializer.data)
 
@@ -161,6 +163,7 @@ def notification_send(request, pk, *args, **kwargs):
     notification_data["image"] = (
         story_instance.image.url if story_instance.image else ""
     )
+    notification_data["click_action"] = "FLUTTER_NOTIFICATION_CLICK"
     device_token_list = (
         all_devices.exclude(registration_id__isnull=True)
         .exclude(registration_id="null")
