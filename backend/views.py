@@ -93,7 +93,7 @@ class StoryView(generics.ListAPIView):
             | Q(status="unpublish")
             | Q(status="archived")
             | Q(archived_with_delete=True)
-        ).order_by("-create_at")
+        ).order_by("-publish_at")
 
 
 class SavedAPIView(APIView):
@@ -109,7 +109,7 @@ class SavedAPIView(APIView):
             ~Q(status="unpublish"),
             ~Q(archived_with_delete=True),
             saved=self.request.user,
-        ).order_by("-create_at")
+        ).order_by("-publish_at")
         serializer = storySerializers(saved_user, many=True)
         return Response(serializer.data)
 
