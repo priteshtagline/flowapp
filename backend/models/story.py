@@ -51,7 +51,7 @@ class Story(models.Model):
     class Meta:
         verbose_name = _("Story")
         verbose_name_plural = _("Story")
-        ordering = ["-publish_at"]
+        ordering = ["-create_at"]
 
     def __str__(self):
         return self.title
