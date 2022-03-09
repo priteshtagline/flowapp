@@ -9,7 +9,7 @@ class Story(models.Model):
     title = models.CharField(
         _("Title"), max_length=128, validators=[MaxLengthValidator(128)]
     )
-    content = RichTextField(validators=[MaxLengthValidator(384)])
+    content = RichTextField(validators=[MaxLengthValidator(240)])
     image = models.ImageField(
         upload_to="story_image",
         verbose_name="Images",
