@@ -24,6 +24,7 @@ import os
 from django.utils.html import strip_tags
 from django.contrib import messages
 from django.contrib.sites.models import Site
+from django.utils import timezone
 
 
 def set_publish_status(request, pk):
@@ -93,6 +94,7 @@ class StoryView(generics.ListAPIView):
             | Q(status="unpublish")
             | Q(status="archived")
             | Q(archived_with_delete=True)
+            | Q(expiration_time__gt=timezone.now())
         ).order_by("-publish_at")
 
 
