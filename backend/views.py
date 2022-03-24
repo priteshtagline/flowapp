@@ -94,7 +94,7 @@ class StoryView(generics.ListAPIView):
             | Q(status="unpublish")
             | Q(status="archived")
             | Q(archived_with_delete=True)
-            | Q(expiration_time__gt=timezone.now())
+            | Q(expiration_time__lt=timezone.now())
         ).order_by("-publish_at")
 
 
