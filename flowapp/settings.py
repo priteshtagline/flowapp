@@ -28,7 +28,7 @@ SECRET_KEY = "643o&ao)vk_fjhfmw5#d-8sp7^ue$g*s08-!d%-g1#=kr5nvhv"
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -159,6 +159,7 @@ EMAIL_HOST_USER = os.environ.get("EMAIL_HOST_USER")
 EMAIL_HOST_PASSWORD = os.environ.get("EMAIL_HOST_PASSWORD")
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
+
 
 
 CELERY_BEAT_SCHEDULE = {

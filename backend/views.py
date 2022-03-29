@@ -1,3 +1,12 @@
+from django.utils import timezone
+from django.contrib.sites.models import Site
+from django.contrib import messages
+from django.utils.html import strip_tags
+import os
+from rest_framework.views import APIView
+from accounts.models.user import User
+from rest_framework import pagination
+from django.shortcuts import render, get_object_or_404
 from email import message
 from django.db.models import Q
 from django.http import response, HttpResponse, HttpResponseRedirect
@@ -16,19 +25,9 @@ from datetime import timedelta, datetime
 import logging
 
 logger = logging.getLogger(__name__)
-from django.shortcuts import render, get_object_or_404
-from rest_framework import pagination
-from accounts.models.user import User
-from rest_framework.views import APIView
-import os
-from django.utils.html import strip_tags
-from django.contrib import messages
-from django.contrib.sites.models import Site
-from django.utils import timezone
 
 
 def set_publish_status(request, pk):
-
     """Update story status."""
     stories = Story.objects.get(pk=pk)
     archived_with_deleted_tag = stories.archived_with_delete
@@ -47,7 +46,11 @@ def set_publish_status(request, pk):
 
 
 def archived_deleted_tag(request, pk):
-    Story.objects.filter(pk=pk).update(status="archived", archived_with_delete=True)
+    Story.objects.filter(pk=pk).update(
+        status="archived", archived_with_delete=True)
+
+    # delete saved list while delete story
+    Story.saved.through.objects.filter(story_id=pk).delete()
     return redirect("/admin/backend/story")
 
 
@@ -153,14 +156,16 @@ def notification_send(request, pk, *args, **kwargs):
             "Content-Type": "application/json",
             "Authorization": "key=" + serverToken,
         }
-    all_devices = FCMDevice.objects.order_by("device_id", "-id").distinct("device_id")
+    all_devices = FCMDevice.objects.order_by(
+        "device_id", "-id").distinct("device_id")
     story_instance = Story.objects.get(pk=pk)
 
     notification_data = dict()
     notification_data["id"] = story_instance.id
     notification_data["title"] = story_instance.title
     notification_data["body"] = (
-        strip_tags(story_instance.content) if strip_tags(story_instance.content) else ""
+        strip_tags(story_instance.content) if strip_tags(
+            story_instance.content) else ""
     )
     notification_data["image"] = (
         story_instance.image.url if story_instance.image else ""
@@ -174,7 +179,7 @@ def notification_send(request, pk, *args, **kwargs):
     print("device_token_list", device_token_list)
     def divide_chunks(l, n):
         for i in range(0, len(l), n):
-            yield l[i : i + n]
+            yield l[i: i + n]
 
     deviceTokensList = list(divide_chunks(device_token_list, 900))
     if deviceTokensList:

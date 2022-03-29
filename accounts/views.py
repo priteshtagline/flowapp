@@ -82,7 +82,8 @@ class RegisterApi(generics.GenericAPIView):
             fcm_device_create(FCM_update, users, user_re_data["first_name"])
         current_site = request.META["HTTP_HOST"]
         relativeLink = reverse("email-verify")
-        absurl = "http://" + current_site + relativeLink + "?token=" + str(token)
+        absurl = "http://" + current_site + \
+            relativeLink + "?token=" + str(token)
         email_body = (
             "Hi " + user.email + " Use the link below to verify your email \n" + absurl
         )
@@ -106,7 +107,8 @@ class VerifyEmail(generics.GenericAPIView):
     def get(self, request):
         token = request.GET.get("token")
         try:
-            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
+            payload = jwt.decode(
+                token, settings.SECRET_KEY, algorithms=["HS256"])
             user = User.objects.get(id=payload["user_id"])
             if not user.is_active == True or user.is_verified == True:
                 user.is_active = True
@@ -134,6 +136,21 @@ class VerifyEmail(generics.GenericAPIView):
 class CustomTokenObtainPairView(TokenObtainPairView):
     # Replace the serializer with your custom
     serializer_class = CustomTokenObtainPairSerializer
+
+    # Email not register Error Response
+    def get_object(self):
+        try:
+            return User.objects.get(email=self.request.data.get("email"))
+        except:
+            return None
+
+    def post(self, request, *args, **kwargs):
+        if not self.get_object():
+            return Response(
+                {"error": {"email": ["Email Not Register So please SignUp First"]}}, status=400
+            )
+
+        return super().post(request, *args, **kwargs)
 
 
 class ChangePasswordView(generics.UpdateAPIView):

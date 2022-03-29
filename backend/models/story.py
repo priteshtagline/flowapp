@@ -1,3 +1,5 @@
+
+from tkinter import CASCADE
 from ckeditor.fields import RichTextField
 from django.core.validators import MaxLengthValidator
 from django.db import models
@@ -9,6 +11,7 @@ class Story(models.Model):
     title = models.CharField(
         _("Title"), max_length=128, validators=[MaxLengthValidator(128)]
     )
+    # update length with 324
     content = RichTextField(validators=[MaxLengthValidator(324)])
     image = models.ImageField(
         upload_to="story_image",
@@ -58,7 +61,8 @@ class Story(models.Model):
 
 
 class Tags(models.Model):
-    name = models.CharField(_("Tag name"), max_length=1000, null=False, default="#")
+    name = models.CharField(
+        _("Tag name"), max_length=1000, null=False, default="#")
     Story = models.ForeignKey(Story, on_delete=models.CASCADE)
 
     class Meta:
