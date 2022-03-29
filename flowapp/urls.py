@@ -32,3 +32,7 @@ urlpatterns = [
 ] + static(MEDIA_URL, document_root=MEDIA_ROOT)
 
 urlpatterns += static(STATIC_URL, document_root=STATIC_ROOT)
+
+admin.site.site_header = "Flow News"
+admin.site.site_title = "Flow News"
+admin.site.index_title = "Flow News"

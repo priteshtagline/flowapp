@@ -171,7 +171,7 @@ def notification_send(request, pk, *args, **kwargs):
         .exclude(registration_id="null")
         .values_list("registration_id", flat=True)
     )
-
+    print("device_token_list", device_token_list)
     def divide_chunks(l, n):
         for i in range(0, len(l), n):
             yield l[i : i + n]
@@ -192,6 +192,7 @@ def notification_send(request, pk, *args, **kwargs):
                 headers=headers,
                 data=json.dumps(body),
             )
+            print("response", response.content)
             notification_inc = story_instance.notification_count
             Story.objects.filter(pk=pk).update(
                 notification_count="2"
