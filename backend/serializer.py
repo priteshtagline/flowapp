@@ -38,7 +38,8 @@ class storySerializers(serializers.ModelSerializer):
     def to_representation(self, data):
         data = super(storySerializers, self).to_representation(data)
         # Rich text box html content convert into normal string data.
-        data["content"] = BeautifulSoup(data["content"], "html.parser").get_text()
+        data["content"] = BeautifulSoup(
+            data["content"], "html.parser").get_text()
         if data["update_at"] == "null" or data["update_at"] == None:
             data["update_at"] = ""
         if data["publish_at"] == "null" or data["publish_at"] == None:

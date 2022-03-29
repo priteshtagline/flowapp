@@ -1,5 +1,8 @@
+from asyncio import exceptions
 from dataclasses import fields
+from tkinter.tix import Tree
 from django.forms import models
+from django.http import HttpResponse, JsonResponse
 from rest_framework import serializers
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 from django.core.validators import EmailValidator
@@ -16,8 +19,11 @@ import random
 from django.contrib.auth.password_validation import validate_password
 
 from django.contrib.auth import authenticate, get_user_model
+from rest_framework.exceptions import APIException
 
 # Register serializer
+
+
 class RegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
@@ -77,15 +83,16 @@ class UserSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         if "password" in validated_data:
-            validated_data["password"] = make_password(validated_data["password"])
+            validated_data["password"] = make_password(
+                validated_data["password"])
         return super(UserSerializer, self).update(instance, validated_data)
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     default_error_messages = {
         "no_active_account": {
-            "error": {"detail": ["No active account found with the given credentials."]}
-        }
+            "error": {"detail": ["Please enter valid email and password"]}
+        },
     }
 
     def __init__(self, *args, **kwargs):
@@ -100,14 +107,20 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             if FCM_update["registration_id"] != "":
                 FCM_update["user"] = user
                 FCM_update["device_id"] = user.device_id
-                FCMDevice.objects.update(**FCM_update)
+                FCMDevice.objects.filter(user=user.id).update(
+                    registration_id=FCM_update["registration_id"],
+                    device_id=FCM_update["device_id"]
+                )
         super().__init__(*args, **kwargs)
 
+
     def validate(self, user_data):
+
+        # Access token with to include user detail.
+
         user_response = super(CustomTokenObtainPairSerializer, self).validate(
             user_data,
         )
-        # Access token with to include user detail.
         user_response.pop("refresh")
         user_response.update({"user": UserSerializer(self.user).data})
 
@@ -167,7 +180,8 @@ class ForgotPasswordEmailSendSerializer(serializers.ModelSerializer):
 class EmailVerificationForgotPasswordSerializer(serializers.ModelSerializer):
     email = serializers.CharField(required=True)
     verification_code = serializers.CharField(required=True)
-    password = serializers.CharField(validators=[validate_password], required=True)
+    password = serializers.CharField(
+        validators=[validate_password], required=True)
     password_conf = serializers.CharField(required=True)
 
     class Meta:
@@ -181,5 +195,6 @@ class EmailVerificationForgotPasswordSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if attrs["password"] != attrs["password_conf"]:
-            raise serializers.ValidationError({"password": "password did not match"})
+            raise serializers.ValidationError(
+                {"password": "password did not match"})
         return super().validate(attrs)
