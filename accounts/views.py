@@ -52,8 +52,6 @@ class RegisterApi(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-
         if User.objects.filter(email__iexact=request.data["email"]).exists():
             return Response(
                 {
@@ -65,6 +63,7 @@ class RegisterApi(generics.GenericAPIView):
                 },
                 status=400,
             )
+        serializer.is_valid(raise_exception=True)
         users = serializer.save()
         user_data = serializer.data
         user_re_data = dict(user_data)
@@ -146,9 +145,8 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
     def post(self, request, *args, **kwargs):
         if not self.get_object():
-            return Response(
-                {"error": {"email": ["Email Not Register So please SignUp First"]}}, status=400
-            )
+            return Response({
+            "error": {"detail": ["Please enter valid email and password"]}}, status=400)
 
         return super().post(request, *args, **kwargs)
 
@@ -168,15 +166,16 @@ class ChangePasswordView(generics.UpdateAPIView):
 
     def update(self, request, *args, **kwargs):
         self.object = self.get_object()
+
+        # Check old password
+        if not self.object.check_password(request.data["old_password"]):
+            return Response(
+                {"old_password": ["Wrong password."]},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         serializer = self.get_serializer(data=request.data)
 
         if serializer.is_valid():
-            # Check old password
-            if not self.object.check_password(serializer.data.get("old_password")):
-                return Response(
-                    {"old_password": ["Wrong password."]},
-                    status=status.HTTP_400_BAD_REQUEST,
-                )
             # set_password also hashes the password that the user will get
             self.object.set_password(serializer.data.get("new_password"))
             self.object.save()

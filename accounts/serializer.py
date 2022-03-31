@@ -25,6 +25,8 @@ from rest_framework.exceptions import APIException
 
 
 class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(
+        validators=[validate_password], required=True)
     class Meta:
         model = User
         fields = (
@@ -90,9 +92,7 @@ class UserSerializer(serializers.ModelSerializer):
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     default_error_messages = {
-        "no_active_account": {
-            "error": {"detail": ["Please enter valid email and password"]}
-        },
+        'no_active_account': {'error': {'detail': ['Please enter valid email and password']}}
     }
 
     def __init__(self, *args, **kwargs):
@@ -134,7 +134,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     Serializer for password change endpoint.
     """
     old_password = serializers.CharField(required=True)
-    new_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(validators=[validate_password],required=True)
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
