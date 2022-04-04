@@ -33,6 +33,7 @@ class User(AbstractUser):
     email = models.EmailField(
         _("Email Address"),
         unique=True,
+        error_messages={'unique':"Your email has already been registered."}
     )
     dob = models.DateField(
         blank=True,
