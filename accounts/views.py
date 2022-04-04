@@ -52,22 +52,22 @@ class RegisterApi(generics.GenericAPIView):
 
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
-        if User.objects.filter(email__iexact=request.data["email"]).exists():
+        serializer.is_valid(raise_exception=True)
+        user_query = User.objects.filter(email__iexact=request.data["email"])
+        if user_query.exists():
             return Response(
                 {
-                    "error": {
-                        "email": [
-                            "Your email already register. please login with password."
-                        ]
-                    }
+                    "email": [
+                        "Your email already register. please login with password."
+                    ]
                 },
                 status=400,
             )
-        serializer.is_valid(raise_exception=True)
+
         users = serializer.save()
         user_data = serializer.data
         user_re_data = dict(user_data)
-        user = User.objects.get(email=user_data["email"])
+        user = user_query.first()
         token = RefreshToken.for_user(user).access_token
 
         FCM_update = {}
@@ -145,8 +145,7 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
     def post(self, request, *args, **kwargs):
         if not self.get_object():
-            return Response({
-            "error": {"detail": ["Please enter valid email and password"]}}, status=400)
+            return Response({"error": {"detail": ["Please enter valid email and password"]}}, status=400)
 
         return super().post(request, *args, **kwargs)
 
