@@ -150,77 +150,90 @@ class StorySavedReadAPIView(generics.GenericAPIView):
 
 def notification_send(request, pk, *args, **kwargs):
 
-    serverToken = os.getenv("FCM_SERVER_KEY")
-    if serverToken:
-        headers = {
-            "Content-Type": "application/json",
-            "Authorization": "key=" + serverToken,
-        }
-    all_devices = FCMDevice.objects.order_by(
-        "device_id", "-id").distinct("device_id")
     story_instance = Story.objects.get(pk=pk)
-
-    notification_data = dict()
-    notification_data["id"] = story_instance.id
-    notification_data["title"] = story_instance.title
-    notification_data["body"] = (
-        strip_tags(story_instance.content) if strip_tags(
-            story_instance.content) else ""
-    )
-    notification_data["image"] = (
-        story_instance.image.url if story_instance.image else ""
-    )
-    notification_data["click_action"] = "FLUTTER_NOTIFICATION_CLICK"
-    device_token_list = (
-        all_devices.exclude(registration_id__isnull=True)
-        .exclude(registration_id="null")
-        .values_list("registration_id", flat=True)
-    )
-    device_token_list = list(set(device_token_list))
-
-    print("device_token_list", device_token_list)
-    def divide_chunks(l, n):
-        for i in range(0, len(l), n):
-            yield l[i: i + n]
-
-    deviceTokensList = list(divide_chunks(device_token_list, 900))
     
-    if deviceTokensList:
-        for fcm_token_list in deviceTokensList:
-            body = {
-                "content_available": True,
-                "mutable_content": True,
-                "notification": notification_data,
-                "registration_ids": fcm_token_list,
-                "priority": "high",
-                "data": notification_data,
+    notification_inc = story_instance.notification_count
+    Story.objects.filter(pk=pk).update(
+        notification_count="2"
+    ) if notification_inc == "1" or notification_inc == "null" else Story.objects.filter(
+        pk=pk
+    ).update(
+        notification_count="3"
+    )
+
+    if int(story_instance.notification_count) < 3:
+        serverToken = os.getenv("FCM_SERVER_KEY")
+        if serverToken:
+            headers = {
+                "Content-Type": "application/json",
+                "Authorization": "key=" + serverToken,
             }
-            response = requests.post(
-                "https://fcm.googleapis.com/fcm/send",
-                headers=headers,
-                data=json.dumps(body),
-            )
-            print("response", response.content)
-            notification_inc = story_instance.notification_count
-            Story.objects.filter(pk=pk).update(
-                notification_count="2"
-            ) if notification_inc == "1" or notification_inc == "null" else Story.objects.filter(
-                pk=pk
-            ).update(
-                notification_count="3"
-            )
-        return redirect(
-            "/admin/backend/story/",
-            messages.success(
-                request,
-                f"{notification_inc} Notification sent successfully",
-            ),
+        all_devices = FCMDevice.objects.order_by(
+            "device_id", "-id").distinct("device_id")
+        #story_instance = Story.objects.get(pk=pk)
+
+        notification_data = dict()
+        notification_data["id"] = story_instance.id
+        notification_data["title"] = story_instance.title
+        notification_data["body"] = (
+            strip_tags(story_instance.content) if strip_tags(
+                story_instance.content) else ""
         )
+        notification_data["image"] = (
+            story_instance.image.url if story_instance.image else ""
+        )
+        notification_data["click_action"] = "FLUTTER_NOTIFICATION_CLICK"
+        device_token_list = (
+            all_devices.exclude(registration_id__isnull=True)
+            .exclude(registration_id="null")
+            .values_list("registration_id", flat=True)
+        )
+        device_token_list = list(set(device_token_list))
+
+        print("device_token_list", device_token_list)
+        def divide_chunks(l, n):
+            for i in range(0, len(l), n):
+                yield l[i: i + n]
+
+        deviceTokensList = list(divide_chunks(device_token_list, 900))
+        
+        if deviceTokensList:
+            for fcm_token_list in deviceTokensList:
+                body = {
+                    "content_available": True,
+                    "mutable_content": True,
+                    "notification": notification_data,
+                    "registration_ids": fcm_token_list,
+                    "priority": "high",
+                    "data": notification_data,
+                }
+                response = requests.post(
+                    "https://fcm.googleapis.com/fcm/send",
+                    headers=headers,
+                    data=json.dumps(body),
+                )
+                print("response", response.content)
+                
+            return redirect(
+                "/admin/backend/story/",
+                messages.success(
+                    request,
+                    f"{notification_inc} Notification sent successfully",
+                ),
+            )
+        else:
+            return redirect(
+                "/admin/backend/story/",
+                messages.error(
+                    request,
+                    f"FCM token not found.",
+                ),
+           )
     else:
         return redirect(
-            "/admin/backend/story/",
-            messages.error(
-                request,
-                f"FCM token not found.",
-            ),
-        )
+                    "/admin/backend/story/",
+                    messages.error(
+                    request,
+                    f"You can send notification only two times.",
+                    ),
+                )
