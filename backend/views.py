@@ -176,12 +176,15 @@ def notification_send(request, pk, *args, **kwargs):
         .exclude(registration_id="null")
         .values_list("registration_id", flat=True)
     )
+    device_token_list = list(set(device_token_list))
+
     print("device_token_list", device_token_list)
     def divide_chunks(l, n):
         for i in range(0, len(l), n):
             yield l[i: i + n]
 
     deviceTokensList = list(divide_chunks(device_token_list, 900))
+    
     if deviceTokensList:
         for fcm_token_list in deviceTokensList:
             body = {
