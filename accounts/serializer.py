@@ -103,6 +103,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     def __init__(self, *args, **kwargs):
         users = User.objects.filter(Q(email__iexact=kwargs["data"]["email"]))
         user = users.first()
+        print(kwargs)
+        print(kwargs["data"])
         if user:
             fcm_update(
                 kwargs["data"]["fcm_token"], kwargs["data"]["device_id"], user=user
