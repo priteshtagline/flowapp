@@ -1,38 +1,29 @@
-from rest_framework import generics
-from rest_framework.response import Response
-from .models.user import User
-from .utils import Util
-from django.urls import reverse
-import jwt
-from flowapp import settings
-from django.contrib.auth.hashers import make_password
-from .serializer import (
-    RegisterSerializer,
-    UserSerializer,
-    CustomTokenObtainPairSerializer,
-    ChangePasswordSerializer,
-    UserProfileSerializer,
-    SocialUserSerializer,
-    ForgotPasswordEmailSendSerializer,
-    EmailVerificationForgotPasswordSerializer,
-)
-from rest_framework_simplejwt.views import (
-    TokenObtainPairView,
-)
-from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
-from rest_framework import generics
-from rest_framework.response import Response
-from .serializer import ChangePasswordSerializer
-from rest_framework.permissions import IsAuthenticated
-from fcm_django.models import FCMDevice
 import random
+
+import jwt
+from django.contrib.auth.hashers import make_password
+from django.urls import reverse
+from fcm_django.models import FCMDevice
+from flowapp import settings
+from rest_framework import generics
+from rest_framework import status
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.renderers import TemplateHTMLRenderer
+from rest_framework.response import Response
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenObtainPairView
 
-
-def fcm_device_create(fcm_array, user, name):
-    FCMDevice.objects.create(**fcm_array, user=user, name=name)
+from .models.user import User
+from .serializer import ChangePasswordSerializer
+from .serializer import CustomTokenObtainPairSerializer
+from .serializer import EmailVerificationForgotPasswordSerializer
+from .serializer import ForgotPasswordEmailSendSerializer
+from .serializer import RegisterSerializer
+from .serializer import SocialUserSerializer
+from .serializer import UserProfileSerializer
+from .serializer import UserSerializer
+from .utils import Util
+from .utils import fcm_update
 
 
 def user_access_token(user, context, is_created=False):
@@ -56,11 +47,7 @@ class RegisterApi(generics.GenericAPIView):
         user_query = User.objects.filter(email__iexact=request.data["email"])
         if user_query.exists():
             return Response(
-                {
-                    "email": [
-                        "Your email already register. please login with password."
-                    ]
-                },
+                {"email": ["Your email already register. please login with password."]},
                 status=400,
             )
 
@@ -70,19 +57,19 @@ class RegisterApi(generics.GenericAPIView):
         user = user_query.first()
         token = RefreshToken.for_user(user).access_token
 
-        FCM_update = {}
-        FCM_update["registration_id"] = ""
-        if "fcm_token" in request.data:
-            FCM_update["registration_id"] = request.data["fcm_token"]
-        if "device_type" in request.data:
-            FCM_update["type"] = request.data["device_type"]
-        if FCM_update["registration_id"] != "":
-            FCM_update["device_id"] = user_re_data["device_id"]
-            fcm_device_create(FCM_update, users, user_re_data["first_name"])
+        fcm_update(
+            request.data["fcm_token"],
+            request.data["device_id"],
+            user=user,
+            device_type=request.data["device_type"]
+            if "device_type" in request.data
+            else None,
+        )
+
+        # Send verification mail
         current_site = request.META["HTTP_HOST"]
         relativeLink = reverse("email-verify")
-        absurl = "http://" + current_site + \
-            relativeLink + "?token=" + str(token)
+        absurl = "http://" + current_site + relativeLink + "?token=" + str(token)
         email_body = (
             "Hi " + user.email + " Use the link below to verify your email \n" + absurl
         )
@@ -106,8 +93,7 @@ class VerifyEmail(generics.GenericAPIView):
     def get(self, request):
         token = request.GET.get("token")
         try:
-            payload = jwt.decode(
-                token, settings.SECRET_KEY, algorithms=["HS256"])
+            payload = jwt.decode(token, settings.SECRET_KEY, algorithms=["HS256"])
             user = User.objects.get(id=payload["user_id"])
             if not user.is_active == True or user.is_verified == True:
                 user.is_active = True
@@ -145,7 +131,10 @@ class CustomTokenObtainPairView(TokenObtainPairView):
 
     def post(self, request, *args, **kwargs):
         if not self.get_object():
-            return Response({"error": {"detail": ["Please enter valid email and password"]}}, status=400)
+            return Response(
+                {"error": {"detail": ["Please enter valid email and password"]}},
+                status=400,
+            )
 
         return super().post(request, *args, **kwargs)
 
@@ -206,15 +195,6 @@ class SocialUserView(generics.GenericAPIView):
         if not serializer.is_valid():
             return Response({"error": serializer.errors}, status=400)
 
-        FCM_update = {}
-        FCM_update["registration_id"] = ""
-        if "fcm_token" in request.data:
-            FCM_update["registration_id"] = request.data.get("fcm_token")
-        if "device_type" in request.data:
-            FCM_update["type"] = request.data.get("device_type")
-        if "device_id" in request.data:
-            FCM_update["device_id"] = request.data.get("device_id")
-
         if request.data["provider_type"] == "apple":
             if (
                 "user_identifier_key" not in request.data
@@ -237,8 +217,14 @@ class SocialUserView(generics.GenericAPIView):
                     user_identifier_key=request.data["user_identifier_key"]
                 ).first()
 
-                if FCM_update["registration_id"] != "":
-                    fcm_device_create(FCM_update, user, user.email)
+                fcm_update(
+                    request.data["fcm_token"],
+                    request.data["device_id"],
+                    user=user,
+                    device_type=request.data["device_type"]
+                    if "device_type" in request.data
+                    else None,
+                )
 
                 return user_access_token(user, self.get_serializer_context())
 
@@ -256,8 +242,14 @@ class SocialUserView(generics.GenericAPIView):
                             user_identifier_key=request.data["user_identifier_key"]
                         ).first()
 
-                        if FCM_update["registration_id"] != "":
-                            fcm_device_create(FCM_update, user, user.email)
+                        fcm_update(
+                            request.data["fcm_token"],
+                            request.data["device_id"],
+                            user=user,
+                            device_type=request.data["device_type"]
+                            if "device_type" in request.data
+                            else None,
+                        )
 
                         return user_access_token(user, self.get_serializer_context())
 
@@ -275,17 +267,28 @@ class SocialUserView(generics.GenericAPIView):
             )
 
             user = User.objects.get(email__iexact=request.data["email"])
-            if FCM_update["registration_id"] != "":
-                fcm_device_create(FCM_update, user, user.email)
-
+            fcm_update(
+                request.data["fcm_token"],
+                request.data["device_id"],
+                user=user,
+                device_type=request.data["device_type"]
+                if "device_type" in request.data
+                else None,
+            )
             return user_access_token(user, self.get_serializer_context())
 
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
 
-        if FCM_update["registration_id"] != "":
-            fcm_device_create(FCM_update, user, user.email)
+        fcm_update(
+            request.data["fcm_token"],
+            request.data["device_id"],
+            user=user,
+            device_type=request.data["device_type"]
+            if "device_type" in request.data
+            else None,
+        )
         return user_access_token(user, self.get_serializer_context(), is_created=True)
 
 

@@ -1,28 +1,37 @@
-from django.utils import timezone
-from django.contrib.sites.models import Site
-from django.contrib import messages
-from django.utils.html import strip_tags
+import json
+import logging
 import os
-from rest_framework.views import APIView
-from accounts.models.user import User
-from rest_framework import pagination
-from django.shortcuts import render, get_object_or_404
+from datetime import datetime
+from datetime import timedelta
 from email import message
+
+import requests
+from accounts.models.user import User
+from django.contrib import messages
+from django.contrib.sites.models import Site
 from django.db.models import Q
-from django.http import response, HttpResponse, HttpResponseRedirect
+from django.http import HttpResponse
+from django.http import HttpResponseRedirect
+from django.http import response
+from django.shortcuts import get_object_or_404
 from django.shortcuts import redirect
+from django.shortcuts import render
+from django.utils import timezone
+from django.utils.html import strip_tags
+from fcm_django.models import FCMDevice
 from grpc import Status
 from rest_framework import generics
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework import pagination
+from rest_framework.permissions import AllowAny
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from fcm_django.models import FCMDevice
-import requests
-import json
-from backend.models.story import Story, Tags
+from rest_framework.views import APIView
+
+from backend.models.story import Story
+from backend.models.story import Tags
+
 from .models.story import Story
 from .serializer import storySerializers
-from datetime import timedelta, datetime
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +55,7 @@ def set_publish_status(request, pk):
 
 
 def archived_deleted_tag(request, pk):
-    Story.objects.filter(pk=pk).update(
-        status="archived", archived_with_delete=True)
+    Story.objects.filter(pk=pk).update(status="archived", archived_with_delete=True)
 
     # delete saved list while delete story
     Story.saved.through.objects.filter(story_id=pk).delete()
@@ -151,8 +159,8 @@ class StorySavedReadAPIView(generics.GenericAPIView):
 def notification_send(request, pk, *args, **kwargs):
 
     story_instance = Story.objects.get(pk=pk)
-    
     notification_inc = story_instance.notification_count
+    
     Story.objects.filter(pk=pk).update(
         notification_count="2"
     ) if notification_inc == "1" or notification_inc == "null" else Story.objects.filter(
@@ -168,16 +176,18 @@ def notification_send(request, pk, *args, **kwargs):
                 "Content-Type": "application/json",
                 "Authorization": "key=" + serverToken,
             }
-        all_devices = FCMDevice.objects.order_by(
-            "device_id", "-id").distinct("device_id")
-        #story_instance = Story.objects.get(pk=pk)
+        all_devices = FCMDevice.objects.order_by("device_id", "-id").distinct(
+            "device_id"
+        )
+        # story_instance = Story.objects.get(pk=pk)
 
         notification_data = dict()
         notification_data["id"] = story_instance.id
         notification_data["title"] = story_instance.title
         notification_data["body"] = (
-            strip_tags(story_instance.content) if strip_tags(
-                story_instance.content) else ""
+            strip_tags(story_instance.content)
+            if strip_tags(story_instance.content)
+            else ""
         )
         notification_data["image"] = (
             story_instance.image.url if story_instance.image else ""
@@ -191,12 +201,13 @@ def notification_send(request, pk, *args, **kwargs):
         device_token_list = list(set(device_token_list))
 
         print("device_token_list", device_token_list)
+
         def divide_chunks(l, n):
             for i in range(0, len(l), n):
-                yield l[i: i + n]
+                yield l[i : i + n]
 
         deviceTokensList = list(divide_chunks(device_token_list, 900))
-        
+
         if deviceTokensList:
             for fcm_token_list in deviceTokensList:
                 body = {
@@ -213,7 +224,7 @@ def notification_send(request, pk, *args, **kwargs):
                     data=json.dumps(body),
                 )
                 print("response", response.content)
-                
+
             return redirect(
                 "/admin/backend/story/",
                 messages.success(
@@ -228,12 +239,12 @@ def notification_send(request, pk, *args, **kwargs):
                     request,
                     f"FCM token not found.",
                 ),
-           )
+            )
     else:
         return redirect(
-                    "/admin/backend/story/",
-                    messages.error(
-                    request,
-                    f"You can send notification only two times.",
-                    ),
-                )
+            "/admin/backend/story/",
+            messages.error(
+                request,
+                f"You can send notification only two times.",
+            ),
+        )

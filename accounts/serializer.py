@@ -1,32 +1,36 @@
+import os
+import random
 from asyncio import exceptions
 from dataclasses import fields
 from tkinter.tix import Tree
-from django.forms import models
-from django.http import HttpResponse, JsonResponse
-from rest_framework import serializers
-from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
-from django.core.validators import EmailValidator
-from .models import User
-from django.db.models import Q
-from django.contrib.auth.hashers import make_password
-from fcm_django.models import FCMDevice
-from backend.models.story import Story
-from rest_framework.exceptions import AuthenticationFailed
-import os
-from flowapp import settings
-from rest_framework_simplejwt.tokens import RefreshToken
-import random
-from django.contrib.auth.password_validation import validate_password
 
-from django.contrib.auth import authenticate, get_user_model
+from backend.models.story import Story
+from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.password_validation import validate_password
+from django.core.validators import EmailValidator
+from django.db.models import Q
+from django.forms import models
+from django.http import HttpResponse
+from django.http import JsonResponse
+from fcm_django.models import FCMDevice
+from flowapp import settings
+from rest_framework import serializers
 from rest_framework.exceptions import APIException
+from rest_framework.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .models import User
+from .utils import fcm_update
 
 # Register serializer
 
 
 class RegisterSerializer(serializers.ModelSerializer):
-    password = serializers.CharField(
-        validators=[validate_password], required=True)
+    password = serializers.CharField(validators=[validate_password], required=True)
+
     class Meta:
         model = User
         fields = (
@@ -85,34 +89,25 @@ class UserSerializer(serializers.ModelSerializer):
 
     def update(self, instance, validated_data):
         if "password" in validated_data:
-            validated_data["password"] = make_password(
-                validated_data["password"])
+            validated_data["password"] = make_password(validated_data["password"])
         return super(UserSerializer, self).update(instance, validated_data)
 
 
 class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     default_error_messages = {
-        'no_active_account': {'error': {'detail': ['Please enter valid email and password']}}
+        "no_active_account": {
+            "error": {"detail": ["Please enter valid email and password"]}
+        }
     }
 
     def __init__(self, *args, **kwargs):
-        FCM_update = {}
-        FCM_update["registration_id"] = ""
-        if "fcm_token" in kwargs["data"]:
-            FCM_update["registration_id"] = kwargs["data"]["fcm_token"]
-
         users = User.objects.filter(Q(email__iexact=kwargs["data"]["email"]))
         user = users.first()
         if user:
-            if FCM_update["registration_id"] != "":
-                FCM_update["user"] = user
-                FCM_update["device_id"] = user.device_id
-                FCMDevice.objects.filter(user=user.id).update(
-                    registration_id=FCM_update["registration_id"],
-                    device_id=FCM_update["device_id"]
-                )
+            fcm_update(
+                kwargs["data"]["fcm_token"], kwargs["data"]["device_id"], user=user
+            )
         super().__init__(*args, **kwargs)
-
 
     def validate(self, user_data):
 
@@ -134,7 +129,7 @@ class ChangePasswordSerializer(serializers.Serializer):
     Serializer for password change endpoint.
     """
     old_password = serializers.CharField(required=True)
-    new_password = serializers.CharField(validators=[validate_password],required=True)
+    new_password = serializers.CharField(validators=[validate_password], required=True)
 
 
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -180,8 +175,7 @@ class ForgotPasswordEmailSendSerializer(serializers.ModelSerializer):
 class EmailVerificationForgotPasswordSerializer(serializers.ModelSerializer):
     email = serializers.CharField(required=True)
     verification_code = serializers.CharField(required=True)
-    password = serializers.CharField(
-        validators=[validate_password], required=True)
+    password = serializers.CharField(validators=[validate_password], required=True)
     password_conf = serializers.CharField(required=True)
 
     class Meta:
@@ -195,6 +189,5 @@ class EmailVerificationForgotPasswordSerializer(serializers.ModelSerializer):
 
     def validate(self, attrs):
         if attrs["password"] != attrs["password_conf"]:
-            raise serializers.ValidationError(
-                {"password": "password did not match"})
+            raise serializers.ValidationError({"password": "password did not match"})
         return super().validate(attrs)

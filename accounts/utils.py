@@ -1,5 +1,7 @@
-from django.core.mail import EmailMessage
 import threading
+
+from django.core.mail import EmailMessage
+from fcm_django.models import FCMDevice
 
 
 class EmailThread(threading.Thread):
@@ -20,3 +22,20 @@ class Util:
             to=[data["to_email"]],
         )
         EmailThread(email).start()
+
+
+def fcm_update(registration_id, device_id, user, device_type=None):
+    device_query = FCMDevice.objects.filter(device_id=device_id, user__email=user.email)
+    device = device_query.first()
+    if device:
+        device_query.update(registration_id=registration_id)
+        print(
+            f"FCM Update, device updated for user : {user.email} {device_id} {registration_id}"
+        )
+    else:
+        FCMDevice.objects.create(
+            device_id=device_id, registration_id=registration_id, user=user
+        )
+        print(
+            f"FCM Update, device created for user : {user.email} {device_id} {registration_id}"
+        )
